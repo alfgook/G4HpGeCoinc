@@ -1,0 +1,8 @@
+# Macro file for the initialization phase of example ED
+# when running in interactive mode without visualization
+#
+# Set some default verbose
+/control/verbose 2
+/control/saveHistory
+/run/verbose 2
+/tracking/verbose 0

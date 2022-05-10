@@ -1,0 +1,5 @@
+
+# comments are written with '#'
+
+/analysis/setFileName test # set the output file name
+/run/beamOn 100000 # run 1e5 events
