@@ -45,7 +45,6 @@ void EventAction::BeginOfEventAction(const G4Event* evt)
 void EventAction::EndOfEventAction(const G4Event* evt)
 {  
     
-// IMPLEMENT WHAT TO DO AT THE END OF AN EVENT
   if(hitsCollectionID==-1) {
     G4SDManager* fSDM = G4SDManager::GetSDMpointer();
     hitsCollectionID = fSDM->GetCollectionID("theDetector/eDep");
@@ -78,7 +77,6 @@ void EventAction::EndOfEventAction(const G4Event* evt)
     total_edep += G4RandGauss::shoot(0.,sigmaE);
     //G4cout << "total_edep smeared = " << total_edep << G4endl;
   }
-
 
   G4AnalysisManager* analysisManager = G4AnalysisManager::Instance();
   analysisManager->FillH1(0,total_edep);

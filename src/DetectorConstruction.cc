@@ -83,15 +83,6 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4Material* air = nist->FindOrBuildMaterial("G4_AIR"); //Build vacuum material using the nist manager
   G4Material* fAlu = nist->FindOrBuildMaterial("G4_Al"); //Build vacuum material using the nist manager
 
-  // LaBr-crystal material
-  G4Element *Ce = nist->FindOrBuildElement("Ce");
-  G4Element *La = nist->FindOrBuildElement("La");
-  G4Element *Br = nist->FindOrBuildElement("Br");
-  G4Material* fLaBr = new G4Material("LaBr:Ce",5.08*g/cm3,3,kStateSolid);
-  fLaBr->AddElement(Ce,1.25*perCent);
-  fLaBr->AddElement(La,23.75*perCent);
-  fLaBr->AddElement(Br,75.0*perCent);
-
   // Ge-crystal material
   G4Material *fGe = new G4Material("HPGe",32.,72.640*g/mole,5.323*g/cm3,kStateSolid);
 
@@ -134,8 +125,9 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
   //G4double detector_radius = 2.54*cm; // 1 inch
   //G4double detector_length = 2.54*cm; // 1 inch 
-  G4double detector_radius = 40.*mm; // 
-  G4double detector_length = 90.*mm; //
+  G4double detector_radius = 45.4864*mm; // Mirion BE6530 
+  G4double detector_length = 30.0000*mm; // Mirion BE6530
+  G4double detector_sample_distance = 7.588*cm; // 10 % solid angle coverage
 
   // crystal
 
@@ -150,12 +142,23 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
   /*G4VPhysicalVolume* DetectorPV =*/
     new G4PVPlacement(0,                     //no rotation
-                      G4ThreeVector(0,0,0),  //at (0,0,0)
+                      G4ThreeVector(0,0,detector_sample_distance),  //at (0,0,0)
                       DetectorLV,            //its logical volume
                       "DetectorPV",          //its name
                       WorldLV,               //its mother volume
                       false,                 //no boolean operation
                       0,                     //copy number
+                      checkOverlaps);        //overlaps checking
+
+
+  /*G4VPhysicalVolume* DetectorPV =*/
+    new G4PVPlacement(0,                     //no rotation
+                      G4ThreeVector(0,0,-detector_sample_distance),  //at (0,0,0)
+                      DetectorLV,            //its logical volume
+                      "DetectorPV",          //its name
+                      WorldLV,               //its mother volume
+                      false,                 //no boolean operation
+                      1,                     //copy number
                       checkOverlaps);        //overlaps checking
 
   G4VisAttributes *GeVisAtt = new G4VisAttributes(G4Color::Red());
@@ -192,7 +195,7 @@ void DetectorConstruction::SetupDetectors()
   G4MultiFunctionalDetector* det = new G4MultiFunctionalDetector("theDetector");
   det->RegisterPrimitive(scorer);
 
-  // we then assign the sensitivity to a logicla volume
+  // we then assign the sensitivity to a logical volume
   G4LogicalVolume *logicVolume = G4LogicalVolumeStore::GetInstance()->GetVolume("DetectorLV"); //retrieve it by its name
   logicVolume->SetSensitiveDetector(det);
 
