@@ -9,14 +9,17 @@
 #include "G4GenericMessenger.hh"
 #include "Randomize.hh"
 #include "G4AnalysisManager.hh"
+#include "G4AccumulableManager.hh"
+#include "CoincCounterAccumulable.hh"
 #include <iostream>
 #include <ios>
 #include "G4ios.hh"
 
 
 
-RunAction::RunAction()
+RunAction::RunAction(G4bool master): isMaster(master)
 {
+  if(isMaster) G4cout << "RunAction is Master" << G4endl;
   G4AnalysisManager* analysisManager = G4AnalysisManager::Instance();
   analysisManager->SetNtupleMerging(true);
   analysisManager->SetFileName("OutPut.root"); //default filename, can be changed by macro command
@@ -30,6 +33,11 @@ RunAction::RunAction()
   analysisManager->CreateNtupleDColumn("EnergyDeps",vEnergyDeps);
   analysisManager->CreateNtupleDColumn("Times",vTimes);
   analysisManager->FinishNtuple();
+
+  G4AccumulableManager* accumulableManager = G4AccumulableManager::Instance();
+  fCoincCounter = new CoincCounterAccumulable("fCoincCounter");
+  accumulableManager->RegisterAccumulable(fCoincCounter);
+  
 }
 
 
@@ -41,7 +49,7 @@ RunAction::~RunAction()
 
 void RunAction::BeginOfRunAction(const G4Run* run)
 { 
-  G4cout << "### Run " << run->GetRunID() << " start." << G4endl;
+  if(isMaster) G4cout << "### Run " << run->GetRunID() << " start." << G4endl;
 
   G4AnalysisManager* analysisManager = G4AnalysisManager::Instance();
   analysisManager->OpenFile();
@@ -55,6 +63,14 @@ void RunAction::EndOfRunAction(const G4Run* /*run*/)
   G4AnalysisManager* analysisManager = G4AnalysisManager::Instance();
   analysisManager->Write();
   analysisManager->CloseFile();
+
+  G4AccumulableManager::Instance()->Merge();
+  //((CoincCounterAccumulable*) G4AccumulableManager::Instance()->GetAccumulable(0))->Print();
+
+  if(isMaster) {
+    G4cout << "isMaster = " << isMaster << G4endl;
+    fCoincCounter->Print();
+  }
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

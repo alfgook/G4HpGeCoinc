@@ -19,16 +19,15 @@ public:
   void EndOfEventAction(const G4Event*);
 
   void RegisterPrimaryGamma(G4double time, G4double energy) {
-    primary_gammas.emplace_back(std::make_pair(time,energy));
+    gammas.emplace_back(std::make_pair(time, energy));
   }
   
 private:
   G4int evtNo;
   G4int hitsCollectionID;
   RunAction* fRunAction;
-
-  std::vector<std::pair<G4double,G4double>> primary_gammas;
-    
+  
+  std::vector<std::pair<G4double,G4double>> gammas;
 };
 
 

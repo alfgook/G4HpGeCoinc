@@ -32,6 +32,7 @@
 #include "PrimaryGeneratorAction.hh"
 #include "RunAction.hh"
 #include "EventAction.hh"
+#include "TrackingAction.hh"
 #include "SteppingAction.hh"
 #include "G4RunManager.hh"
 
@@ -51,7 +52,7 @@ ActionInitialization::~ActionInitialization()
 
 void ActionInitialization::BuildForMaster() const
 {
-   RunAction *aRunAction = new RunAction();
+   RunAction *aRunAction = new RunAction(true);
    SetUserAction(aRunAction);
 }
 
@@ -61,11 +62,13 @@ void ActionInitialization::Build() const
 {   
     RunAction *aRunAction = new RunAction();
     EventAction* aEventAction = new EventAction(aRunAction);
+    TrackingAction* aTrackingAction = new TrackingAction(aEventAction);
 
     SetUserAction(aRunAction);
     SetUserAction(new PrimaryGeneratorAction());
     SetUserAction(aEventAction);
-    SetUserAction(new SteppingAction(aEventAction) );
+    SetUserAction(aTrackingAction);
+    //SetUserAction(new SteppingAction(aEventAction) );
 
 }  
 

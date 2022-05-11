@@ -19,6 +19,8 @@
 #include "G4SDManager.hh"
 #include "G4THitsMap.hh"
 #include "G4AnalysisManager.hh"
+#include "G4AccumulableManager.hh"
+#include "CoincCounterAccumulable.hh"
 
 #include "HPGeHit.hh"
 
@@ -27,6 +29,7 @@ EventAction::EventAction(RunAction* aRunAction)
 {
   hitsCollectionID = -1;
   fRunAction = aRunAction;
+  gammas.reserve(100);
 }
  
 EventAction::~EventAction()
@@ -37,7 +40,7 @@ EventAction::~EventAction()
  
 void EventAction::BeginOfEventAction(const G4Event* evt)
 { 
-  primary_gammas.clear();
+  gammas.clear();
 }
 
 void EventAction::EndOfEventAction(const G4Event* evt)
@@ -91,11 +94,14 @@ void EventAction::EndOfEventAction(const G4Event* evt)
 
   //------ analyse the source gamma-rays -----------
 
-  /*std::sort(primary_gammas.begin(),primary_gammas.end()); // sort the entries by time
-  for(size_t i=0;i<primary_gammas.size();i++) {
-    for(size_t j=i+1;j<primary_gammas.size();j++) {
-
+  for(size_t i=0;i<gammas.size();i++) {
+    for(size_t j=i+1;j<gammas.size();j++) {
+      if(fabs(gammas[i].first-gammas[j].first)<coincTime) {
+        G4int E1(1000.*gammas[i].second+0.5);
+        G4int E2(1000.*gammas[j].second+0.5);
+        ((CoincCounterAccumulable*) G4AccumulableManager::Instance()->GetAccumulable(0))->CountCoinc(std::make_pair(E1,E2));
+      }
     }
-  }*/
+  }
 }
 
