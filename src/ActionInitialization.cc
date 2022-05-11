@@ -51,29 +51,21 @@ ActionInitialization::~ActionInitialization()
 
 void ActionInitialization::BuildForMaster() const
 {
-   // SetUserAction(new RunAction());
+   RunAction *aRunAction = new RunAction();
+   SetUserAction(aRunAction);
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 void ActionInitialization::Build() const
-{
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // All user action classes must be defined through the protected method SetUserAction().
-    // In other words: here you call 
-    // 1. Primary beam PrimaryGenerator
-    // 2. Run Action
-    // 3. Event Action
-    // 4. Stepping Action
-    // 5. Tracking Action (if you want it)
-    // 6. ....
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    
+{   
+    RunAction *aRunAction = new RunAction();
+    EventAction* aEventAction = new EventAction(aRunAction);
+
+    SetUserAction(aRunAction);
     SetUserAction(new PrimaryGeneratorAction());
-    SetUserAction(new RunAction());
-    SetUserAction(new EventAction());
-    EventAction* event = new EventAction();
-    SetUserAction(new SteppingAction(event) );
+    SetUserAction(aEventAction);
+    SetUserAction(new SteppingAction(aEventAction) );
 
 }  
 

@@ -44,9 +44,14 @@ void HPGeSD::Initialize(G4HCofThisEvent* hce)
 
 G4bool HPGeSD::ProcessHits(G4Step* aStep, G4TouchableHistory*)
 {
+	G4int PDGcode = aStep->GetTrack()->GetDefinition()->GetPDGEncoding();
+
+	if(PDGcode!=11 && PDGcode!=22 && PDGcode!=-22 ) {
+		return false; // only gammas e- and e+
+	}
+
 	G4int trackID = aStep->GetTrack()->GetTrackID();
 	G4double trackWeight = aStep->GetTrack()->GetWeight();
-	G4int PDGcode = aStep->GetTrack()->GetDefinition()->GetPDGEncoding();
 
 	G4TouchableHistory *theTouchable = (G4TouchableHistory*) (aStep->GetPreStepPoint()->GetTouchable());
 	G4int VolCopyNo = theTouchable->GetVolume()->GetCopyNo();
@@ -54,9 +59,36 @@ G4bool HPGeSD::ProcessHits(G4Step* aStep, G4TouchableHistory*)
 	G4double stepTime = aStep->GetPostStepPoint()->GetGlobalTime();
 	G4double Edep = aStep->GetTotalEnergyDeposit();
 
+	/*G4cout << "------ProcessHits()-----" << G4endl;
+	G4cout << "Edep step = " << Edep << G4endl;
+	G4cout << "Ekin step = " << aStep->GetPreStepPoint()->GetKineticEnergy() << G4endl;
+	G4cout << "copy nbr = " << VolCopyNo << G4endl;
+	G4cout << "fHitsCollection->entries() = " << fHitsCollection->entries() << G4endl;
+	G4cout << "------------------------" << G4endl;*/
 
-	HPGeHit* theHit = new HPGeHit(VolCopyNo, trackID, PDGcode, Edep, stepTime, trackWeight);
-	fHitsCollection->insert( theHit );
+	const G4double detectorResolvingTime = 10.e3; // 10 micro sec
+
+	HPGeHit* theHit = nullptr;
+	for(size_t i=0;i<fHitsCollection->entries();i++) {
+		//loop over existing hits to find the one for the present physical instance of the detector
+		if( ((*fHitsCollection)[i]->GetVolCopyNo() == VolCopyNo)
+			  && (fabs((*fHitsCollection)[i]->GetTime() - stepTime) < detectorResolvingTime)) {
+
+			theHit = (*fHitsCollection)[i];
+			/*G4cout << "\t found hit" << G4endl;
+			G4cout << "time(hit) = " << (*fHitsCollection)[i]->GetTime() << G4endl;
+			G4cout << "Edep(hit) = " << (*fHitsCollection)[i]->GetEdep() << G4endl;*/
+
+			theHit->SetTime(std::min(theHit->GetTime(),stepTime));
+			theHit->AddEdep(Edep);
+			// G4cout << "found hit" << G4endl;
+			break;
+		}
+	}
+	if(!theHit) {
+		theHit = new HPGeHit(VolCopyNo, trackID, PDGcode, Edep, stepTime, trackWeight);
+		fHitsCollection->insert( theHit );
+	}
 
 	return true;
 }

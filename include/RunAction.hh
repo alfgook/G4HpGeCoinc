@@ -33,6 +33,7 @@
 
 #include "G4UserRunAction.hh"
 #include "globals.hh"
+#include <vector>
 
 class G4Run;
 class G4GenericMessenger;
@@ -48,10 +49,20 @@ class RunAction : public G4UserRunAction
     virtual void BeginOfRunAction(const G4Run*);
     virtual void   EndOfRunAction(const G4Run*);
     G4int GetRunID() {return runID;};
+
+    void AddNtupleEntry(G4int detectorNbr,G4double Edep, G4double time) {
+      vDetectorNbrs.emplace_back(detectorNbr);
+      vEnergyDeps.emplace_back(Edep);
+      vTimes.emplace_back(time);
+    }
+    void AddNtupleRow();
     
     
   private:
       G4int runID;
+      std::vector<G4int> vDetectorNbrs;
+      std::vector<G4double> vEnergyDeps;
+      std::vector<G4double> vTimes;
       
 };
 

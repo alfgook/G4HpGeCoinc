@@ -45,7 +45,8 @@ class DetectorConstruction : public G4VUserDetectorConstruction
 
   public:
     virtual G4VPhysicalVolume* Construct();
-    void SetupDetectors();
+    virtual void ConstructSDandField();
+    //void SetupDetectors();
 };
 
 

@@ -18,14 +18,18 @@
 RunAction::RunAction()
 {
   G4AnalysisManager* analysisManager = G4AnalysisManager::Instance();
-  G4cout << "Using " << analysisManager->GetType() << G4endl;
-  analysisManager->SetFileName("OutPut"); //default filename, can be changed by macro command
+  analysisManager->SetNtupleMerging(true);
+  analysisManager->SetFileName("OutPut.root"); //default filename, can be changed by macro command
 
-  analysisManager->CreateH1("Edep_det1","Edep_det1",3*8200,0.,8.2); // 1 keV binning
-  analysisManager->CreateH1("Edep_det2","Edep_det2",3*8200,0.,8.2); // 1 keV binning
+  analysisManager->CreateH1("Edep_det1","Edep_det1",4000,0.,4000); // 1 keV binning
+  analysisManager->CreateH1("Edep_det2","Edep_det2",4000,0.,4000); // 1 keV binning
+  analysisManager->CreateH2("E0vsE1","E0vsE1",2000,0.,4000.,2000,0.,4000.); //
 
-  //analysisManager->CreateNtuple("G4HPGeCoinc", "G4HPGeCoinc");
-
+  analysisManager->CreateNtuple("G4HPGeCoinc", "G4HPGeCoinc");
+  analysisManager->CreateNtupleIColumn("detectorNbr",vDetectorNbrs);
+  analysisManager->CreateNtupleDColumn("EnergyDeps",vEnergyDeps);
+  analysisManager->CreateNtupleDColumn("Times",vTimes);
+  analysisManager->FinishNtuple();
 }
 
 
@@ -54,3 +58,11 @@ void RunAction::EndOfRunAction(const G4Run* /*run*/)
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+void RunAction::AddNtupleRow()
+{
+  G4AnalysisManager::Instance()->AddNtupleRow();
+  vDetectorNbrs.clear();
+  vEnergyDeps.clear();
+  vTimes.clear();
+}

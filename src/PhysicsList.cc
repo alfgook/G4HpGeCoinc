@@ -31,7 +31,7 @@ PhysicsList::PhysicsList(): G4VModularPhysicsList()
   fRaddecayList = new G4RadioactiveDecayPhysics();
 
   // EM physics
-      emPhysicsList = new G4EmStandardPhysics_option4();
+  emPhysicsList = new G4EmStandardPhysics_option4();
    //   emPhysicsList = new G4EmLivermorePhysics(0);
    //   emPhysicsList = new G4EmPenelopePhysics(0);
 }

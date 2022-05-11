@@ -3,14 +3,15 @@
 
 #include "G4UserEventAction.hh"
 #include "globals.hh"
-#include <vector>
+#include "HPGeHit.hh"
+#include "RunAction.hh"
 
 class G4Step;
 
 class EventAction : public G4UserEventAction
 {
 public:
-  EventAction();
+  EventAction(RunAction* aRunAction);
   ~EventAction();
 
 public:
@@ -20,7 +21,7 @@ public:
 private:
   G4int evtNo;
   G4int hitsCollectionID;
-
+  RunAction* fRunAction;
     
 };
 

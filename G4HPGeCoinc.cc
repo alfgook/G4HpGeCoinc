@@ -8,7 +8,13 @@
 #include "PhysicsList.hh"
 
 // COMPULSORY
+#ifdef G4MULTITHREADED
+#include "G4MTRunManager.hh"
+#else
 #include "G4RunManager.hh"
+#endif
+
+
 #include "G4UImanager.hh"
 
 // FOR VISUALIZATION
@@ -23,8 +29,6 @@
 #include "G4PhysListFactory.hh"
 
 
-
-
 int main(int argc,char** argv)
 {
 
@@ -32,8 +36,22 @@ int main(int argc,char** argv)
   // Detect interactive mode (if no arguments) and define UI session
   /////////////////////////////////////////////////////////////////////
 
+  G4String macro;
+  #ifdef G4MULTITHREADED
+    G4int nThreads = 1;
+  #endif
+
+  if( argc>1 ) {
+    for ( G4int i=1; i<argc; i=i+2 ) {
+      if( G4String(argv[i]) == "-m" ) {
+        macro = argv[i+1];
+      }
+      if( G4String(argv[i]) == "-t" ) nThreads = G4UIcommand::ConvertToInt(argv[i+1]);
+    }
+  }
+
   G4UIExecutive* ui = 0;
-  if ( argc == 1 ) {
+  if ( macro.size()==0 ) {
     ui = new G4UIExecutive(argc, argv);
   }
   
@@ -46,15 +64,20 @@ int main(int argc,char** argv)
   //G4long myseed =  ((G4long) ((t%333564)*6745)+5);
   //myseed=(long) fabs(myseed);
   //CLHEP::HepRandom::setTheSeed(myseed);
-
-
-  
   
   //////////////////////////////////////////
-  // Construct the default run manager
+  // Construct the run manager
   //////////////////////////////////////////
   
-  G4RunManager* runManager = new G4RunManager;
+  #ifdef G4MULTITHREADED
+    G4MTRunManager * runManager = new G4MTRunManager;
+    
+    if(nThreads==0) nThreads = G4Threading::G4GetNumberOfCores();
+    runManager->SetNumberOfThreads(nThreads);
+
+  #else
+    G4RunManager * runManager = new G4RunManager;
+  #endif
 
   ////////////////////////////////////////////
   // set mandatory initialization classes
@@ -99,10 +122,9 @@ int main(int argc,char** argv)
   ////////////////////////////////////////////////////////////
   
   G4UImanager* UImanager = G4UImanager::GetUIpointer();
-  if (! ui) {// batch mode
+  if (!ui) {// batch mode
     G4String command = "/control/execute ";
-    G4String fileName = argv[1];
-    UImanager->ApplyCommand(command+fileName);
+    UImanager->ApplyCommand(command+macro);
   }
   else {// interactive mode : define UI session
     UImanager->ApplyCommand("/control/execute init_vis.mac"); 

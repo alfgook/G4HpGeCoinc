@@ -87,7 +87,7 @@ void HPGeHit::Draw()
 
 void HPGeHit::Print()
 {
-  G4cout << "  PDGcode: " << fPDGcode << " Light: " << G4BestUnit(fEnergyDep,"Energy") << G4endl;
+  G4cout << "  PDGcode: " << fPDGcode << " EnergyDeposit: " << G4BestUnit(fEnergyDep,"Energy") << G4endl;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

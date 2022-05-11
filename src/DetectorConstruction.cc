@@ -53,10 +53,7 @@
 #include "G4VisAttributes.hh"
 
 //inlcudes for the sensitive detector
-#include "G4SDParticleFilter.hh"
-#include "G4VPrimitiveScorer.hh"
-#include "G4PSEnergyDeposit.hh"
-#include "G4MultiFunctionalDetector.hh"
+#include "HPGeSD.hh"
 #include "G4SDManager.hh"
 #include "G4LogicalVolumeStore.hh"
 
@@ -144,7 +141,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     new G4PVPlacement(0,                     //no rotation
                       G4ThreeVector(0,0,detector_sample_distance),  //at (0,0,0)
                       DetectorLV,            //its logical volume
-                      "DetectorPV",          //its name
+                      "DetectorPV1",          //its name
                       WorldLV,               //its mother volume
                       false,                 //no boolean operation
                       0,                     //copy number
@@ -155,7 +152,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     new G4PVPlacement(0,                     //no rotation
                       G4ThreeVector(0,0,-detector_sample_distance),  //at (0,0,0)
                       DetectorLV,            //its logical volume
-                      "DetectorPV",          //its name
+                      "DetectorPV2",          //its name
                       WorldLV,               //its mother volume
                       false,                 //no boolean operation
                       1,                     //copy number
@@ -165,7 +162,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   DetectorLV->SetVisAttributes(GeVisAtt);
   //====================================================
 
-  SetupDetectors();
+  //SetupDetectors();
   return WorldPV; //must return G4VPhysicalVolume pointer to the world
 
 
@@ -173,32 +170,10 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-void DetectorConstruction::SetupDetectors()
+void DetectorConstruction::ConstructSDandField()
 {
-  // we now create a primitive scorer which registers energy deposits
-  G4VPrimitiveScorer *scorer = new G4PSEnergyDeposit("eDep",0);
-
-  // Create a filter: we want to register energy deposits from electrons and positrons to model a typical gamma-ray detector
-  // We also need to add gammas to our filter: This is because of the way geant4 treats "cuts". If the range of the
-  // electron/positron is smaller than the specified range cut ti will not be created and the energy will be counted as
-  // having been deposit by the gamma-ray.
-  G4String filterName, particleName;
-  G4SDParticleFilter* aFilter = new G4SDParticleFilter(filterName="epFilter");
-  aFilter->add(particleName="e-");
-  aFilter->add(particleName="e+");
-  aFilter->add(particleName="gamma");
-
-  // we assign our recently created filter to it
-  scorer->SetFilter(aFilter);
-
-  // now we assign the primitive scorrer to a detector, one could add more types of primitive scorers to this same detector
-  G4MultiFunctionalDetector* det = new G4MultiFunctionalDetector("theDetector");
-  det->RegisterPrimitive(scorer);
-
-  // we then assign the sensitivity to a logical volume
-  G4LogicalVolume *logicVolume = G4LogicalVolumeStore::GetInstance()->GetVolume("DetectorLV"); //retrieve it by its name
-  logicVolume->SetSensitiveDetector(det);
-
-  // finaly we register the created detector to the detector manager 
-  G4SDManager::GetSDMpointer()->AddNewDetector(det);
+  HPGeSD* HPGeDetector = new HPGeSD("HPGeSD","HPGeHC");
+  G4LogicalVolume *logicVolume = G4LogicalVolumeStore::GetInstance()->GetVolume("DetectorLV");
+  logicVolume->SetSensitiveDetector(HPGeDetector);
+  G4SDManager::GetSDMpointer()->AddNewDetector(HPGeDetector);
 }

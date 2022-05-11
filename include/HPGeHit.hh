@@ -12,13 +12,7 @@
 #include "G4THitsCollection.hh"
 #include "G4Allocator.hh"
 #include "G4ThreeVector.hh"
-#include "tls.hh"
-
-/// Tracker hit class
-///
-/// It defines data members to store the trackID, chamberNb, energy deposit,
-/// and position of charged particles in a selected volume:
-/// - fTrackID, fChamberNB, fEdep, fPos
+//#include "tls.hh"
 
 class HPGeHit : public G4VHit
 {
@@ -43,15 +37,17 @@ public:
 	//HPGeHit *clone(G4int, G4int)
 
     // Set methods
-  void SetPDGcode(G4int aPDGcode) {fPDGcode=aPDGcode;};
+  void SetPDGcode(G4int aPDGcode) { fPDGcode = aPDGcode; };
+  void SetTime(G4double aTime) { fTime = aTime; };
+  void AddEdep(G4double aEdep) { fEnergyDep += aEdep; };
 
     // Get methods
+  G4int GetVolCopyNo() const { return fVolumeCopyNo; };
   G4int GetParentID() const     { return fParentID; };
   G4int GetPDGcode() const     { return fPDGcode; };
-  G4double GetLight() const     { return fEnergyDep; };
+  G4double GetEdep() const     { return fEnergyDep; };
   G4double GetTime() const     { if(fEnergyDep){ return fTime; }else{ return 0.; } };
   G4double GetWeight() const  { return fWeight; };
-  G4int GetVolCopyNo() const { return fVolumeCopyNo; };
 
 private:
 
