@@ -37,12 +37,13 @@ EventAction::~EventAction()
  
 void EventAction::BeginOfEventAction(const G4Event* evt)
 { 
-
+  primary_gammas.clear();
 }
 
 void EventAction::EndOfEventAction(const G4Event* evt)
 {  
-    
+  
+  //------ analyse the detector data -----------
   G4AnalysisManager* analysisManager = G4AnalysisManager::Instance();
 
   if(hitsCollectionID==-1) {
@@ -87,5 +88,14 @@ void EventAction::EndOfEventAction(const G4Event* evt)
     }
   }
   fRunAction->AddNtupleRow();
+
+  //------ analyse the source gamma-rays -----------
+
+  /*std::sort(primary_gammas.begin(),primary_gammas.end()); // sort the entries by time
+  for(size_t i=0;i<primary_gammas.size();i++) {
+    for(size_t j=i+1;j<primary_gammas.size();j++) {
+
+    }
+  }*/
 }
 
