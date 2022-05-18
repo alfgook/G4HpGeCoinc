@@ -27,12 +27,11 @@ TrackingAction::~TrackingAction()
 
 void TrackingAction::PreUserTrackingAction(const G4Track* aTrack)
 {
-	if(aTrack->GetDefinition()==G4Gamma::Definition()) {
-		//G4cout << "GetProcessType = " << aTrack->GetCreatorProcess()->GetProcessType() << G4endl;
-		if(aTrack->GetCreatorProcess()->GetProcessType()==fDecay) { //
-			aTrack->GetVertexKineticEnergy();
-			aTrack->GetGlobalTime();
-			fEventAction->RegisterPrimaryGamma(aTrack->GetGlobalTime(),aTrack->GetVertexKineticEnergy());
+	if(aTrack->GetDefinition()==G4Gamma::Definition()) { // if the track is a gamma-ray
+		if(aTrack->GetCreatorProcess()) { // if it is not created by the PrimaryGeneratorAction
+			if(aTrack->GetCreatorProcess()->GetProcessType()==fDecay) { // if it was created by a decay process
+				fEventAction->RegisterPrimaryGamma(aTrack->GetGlobalTime(),aTrack->GetVertexKineticEnergy());
+			}
 		}
 	}
 	

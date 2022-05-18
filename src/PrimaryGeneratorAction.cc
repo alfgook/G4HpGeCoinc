@@ -27,8 +27,8 @@ fParticleGun(0)
   fParticleGun  = new G4ParticleGun(nofParticles);
   
 
-   G4ThreeVector position(0, 0, -25.*cm);
-   G4double energy = 8.*MeV;
+   G4ThreeVector position(0, 0, 0);
+   G4double energy = 0.*MeV;
    G4ThreeVector direction(0, 0, 1);
   
   // Default particle kinematics

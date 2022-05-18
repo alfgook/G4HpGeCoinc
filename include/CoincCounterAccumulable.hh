@@ -27,6 +27,7 @@ public:
 	virtual void Merge(const G4VAccumulable& other);
 	virtual void Reset();
 	void Print();
+	void Print2file(G4String filename);
 
 private:
 	std::map<std::pair<G4int,G4int>,G4int> fCoincCounter;

@@ -15,8 +15,6 @@
 #include <ios>
 #include "G4ios.hh"
 
-
-
 RunAction::RunAction(G4bool master): isMaster(master)
 {
   if(isMaster) G4cout << "RunAction is Master" << G4endl;
@@ -70,7 +68,13 @@ void RunAction::EndOfRunAction(const G4Run* /*run*/)
   if(isMaster) {
     G4cout << "isMaster = " << isMaster << G4endl;
     fCoincCounter->Print();
+    
+    G4String filename = analysisManager->GetFileName();
+    filename = filename.substr(0, filename.find_last_of("."));
+    filename.append(".txt");
+    fCoincCounter->Print2file(filename);
   }
+  fCoincCounter->Reset();
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
