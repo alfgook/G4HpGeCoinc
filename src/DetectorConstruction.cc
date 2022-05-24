@@ -118,49 +118,108 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   WorldVisAtt->SetForceWireframe(true);
   WorldLV->SetVisAttributes(WorldVisAtt);
 
-  // ========== Cylinder representing a detector crystal =======
+  // =============== The outer box that houses the HPGe-crystal ===================================================================
+  G4double detector_box_height = 120*mm;
+  G4double detector_box_widthX = (2.*66.5 + 57.0)*mm;
+  G4double detector_box_widthY = 230.0*mm; // measured on drawing
+  G4double detector_box_wall_thickness = 10.0*mm;
+  G4double detector_box_hole_radius = 0.5*95.0*mm;
+  G4double detector_window_thickness = 1.0*mm;
 
-  //G4double detector_radius = 2.54*cm; // 1 inch
-  //G4double detector_length = 2.54*cm; // 1 inch 
-  G4double detector_radius = 45.4864*mm; // Mirion BE6530 
-  G4double detector_length = 30.0000*mm; // Mirion BE6530
-  G4double detector_sample_distance = 7.588*cm; // 10 % solid angle coverage
+  G4double CrystalSizeX = 57.*mm;
+  G4double CrystalSizeY = 54.*mm;
+  G4double CrystalSizeZ = 30.*mm;
 
-  // crystal
+  auto CrystalPosition = G4ThreeVector(0,0,0);
+  auto DetectorBoxPosition = G4ThreeVector(0,0.5*detector_box_widthY-49.5*mm - CrystalSizeY*0.5,0.5*detector_box_height-26.8-0.5*CrystalSizeZ); 
 
-  G4Tubs* solidDetector = new G4Tubs("DetectorSolid",0.,detector_radius,0.5*detector_length,0.,360.*deg);
+  G4Box *DetectorBoxOuterS = new G4Box("DetectorBoxOuterS",0.5*detector_box_widthX,0.5*detector_box_widthY,0.5*detector_box_height);
 
-  G4LogicalVolume* DetectorLV = 
-    new G4LogicalVolume(solidDetector,          //its solid
-                        //fLaBr,           //its material
-                        fGe,           //its material
-                        "DetectorLV");            //its name
+  G4Box *DetectorBoxInnerS = new G4Box("DetectorBoxOuterS",0.5*(detector_box_widthX - 2.*detector_box_wall_thickness)
+                                                          ,0.5*(detector_box_widthY - 2.*detector_box_wall_thickness)
+                                                          ,0.5*(detector_box_height - 2.*detector_box_wall_thickness));
 
+  G4SubtractionSolid* DetectorBoxS1 = new G4SubtractionSolid("DetectorBoxS1", DetectorBoxOuterS, DetectorBoxInnerS);
 
-  /*G4VPhysicalVolume* DetectorPV =*/
-    new G4PVPlacement(0,                     //no rotation
-                      G4ThreeVector(0,0,detector_sample_distance),  //at (0,0,0)
-                      DetectorLV,            //its logical volume
-                      "DetectorPV1",          //its name
+  G4Tubs* DetectorBoxHoleS = new G4Tubs("DetectorBoxHoleS",0.,detector_box_hole_radius,0.5*detector_box_wall_thickness+1.*mm,0.,360.*deg);
+
+  auto HolePosition =  
+    -G4ThreeVector(0,0.5*detector_box_widthY - 49.5*mm - CrystalSizeY*0.5,0.5*detector_box_height-0.5*detector_box_wall_thickness);
+
+  G4SubtractionSolid* DetectorBoxS = new G4SubtractionSolid("DetectorBoxS", DetectorBoxS1, DetectorBoxHoleS, 0, HolePosition);
+
+  G4LogicalVolume* DetectorBoxLV = new G4LogicalVolume(DetectorBoxS, fGe, "DetectorBoxLV");
+  new G4PVPlacement(0,                     //no rotation
+                      DetectorBoxPosition,
+                      DetectorBoxLV,            //its logical volume
+                      "DetectorBoxPV",          //its name
                       WorldLV,               //its mother volume
                       false,                 //no boolean operation
                       0,                     //copy number
                       checkOverlaps);        //overlaps checking
 
-
-  /*G4VPhysicalVolume* DetectorPV =*/
-    new G4PVPlacement(0,                     //no rotation
-                      G4ThreeVector(0,0,-detector_sample_distance),  //at (0,0,0)
-                      DetectorLV,            //its logical volume
-                      "DetectorPV2",          //its name
+  auto WindowPosition = DetectorBoxPosition + HolePosition - G4ThreeVector(0,0,0.5*(detector_window_thickness - detector_box_wall_thickness));
+  G4Tubs* DetectorWindowS = new G4Tubs("DetectorWindowS",0.,detector_box_hole_radius,0.5*detector_window_thickness,0.,360.*deg);
+  G4LogicalVolume* DetectorWindowLV = new G4LogicalVolume(DetectorWindowS, fGe, "DetectorWindowLV");
+  new G4PVPlacement(0,                     //no rotation
+                      WindowPosition,
+                      DetectorWindowLV,            //its logical volume
+                      "DetectorWindowPV",          //its name
                       WorldLV,               //its mother volume
                       false,                 //no boolean operation
-                      1,                     //copy number
+                      0,                     //copy number
                       checkOverlaps);        //overlaps checking
 
-  G4VisAttributes *GeVisAtt = new G4VisAttributes(G4Color::Red());
-  DetectorLV->SetVisAttributes(GeVisAtt);
-  //====================================================
+  // =============== The HPGe-crystal ===================================================================
+  G4Box *HPGeCrystalS = new G4Box("HPGeCrystalS",0.5*CrystalSizeX,0.5*CrystalSizeY,0.5*CrystalSizeZ);
+  G4LogicalVolume* HPGeCrystalLV = new G4LogicalVolume(HPGeCrystalS, fGe, "HPGeCrystalLV");
+
+  new G4PVPlacement(0,                     //no rotation
+                      CrystalPosition,
+                      HPGeCrystalLV,            //its logical volume
+                      "HPGeCrystalPV",          //its name
+                      WorldLV,               //its mother volume
+                      false,                 //no boolean operation
+                      0,                     //copy number
+                      checkOverlaps);        //overlaps checking
+
+  G4double BigSegmentX = 47.*mm;
+  G4double BigSegmentY = 44.*mm;
+  G4double BigSegmentZ = CrystalSizeZ;
+  G4Box *BigSegmentS = new G4Box("BigSegmentS",0.5*BigSegmentX,0.5*BigSegmentY,0.5*BigSegmentZ);
+  G4LogicalVolume* BigSegmentLV = new G4LogicalVolume(BigSegmentS, fGe, "BigSegmentLV");
+
+  new G4PVPlacement(0,                     //no rotation
+                      G4ThreeVector(0,0,0),
+                      BigSegmentLV,            //its logical volume
+                      "BigSegmentPV",          //its name
+                      HPGeCrystalLV,               //its mother volume
+                      false,                 //no boolean operation
+                      7,                     //segment number
+                      checkOverlaps);        //overlaps checking
+
+
+  G4double SmallSegmentX = 5.*mm;
+  G4double SmallSegmentY = 10.*mm;
+  G4double SmallSegmentZ = CrystalSizeZ;
+  G4Box *SmallSegmentS = new G4Box("SmallSegmentS",0.5*SmallSegmentX,0.5*SmallSegmentY,0.5*SmallSegmentZ);
+  G4LogicalVolume* SmallSegmentLV = new G4LogicalVolume(SmallSegmentS, fGe, "SmallSegmentLV");
+
+  G4String PVname;
+  G4double PVposX = 2.5*SmallSegmentX;
+  for(int segment=1;segment<7;segment++) {
+    PVname = "SmallSegmentPV_" + std::to_string(segment);
+    new G4PVPlacement(0,                     //no rotation
+                      G4ThreeVector(PVposX,0,0),
+                      SmallSegmentLV,            //its logical volume
+                      PVname,          //its name
+                      BigSegmentLV,               //its mother volume
+                      false,                 //no boolean operation
+                      segment,                     //segment number
+                      checkOverlaps);        //overlaps checking
+
+    PVposX -= SmallSegmentX;
+  }
 
   //SetupDetectors();
   return WorldPV; //must return G4VPhysicalVolume pointer to the world
@@ -173,7 +232,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 void DetectorConstruction::ConstructSDandField()
 {
   HPGeSD* HPGeDetector = new HPGeSD("HPGeSD","HPGeHC");
-  G4LogicalVolume *logicVolume = G4LogicalVolumeStore::GetInstance()->GetVolume("DetectorLV");
-  logicVolume->SetSensitiveDetector(HPGeDetector);
+  G4LogicalVolumeStore::GetInstance()->GetVolume("SmallSegmentLV")->SetSensitiveDetector(HPGeDetector);
+  G4LogicalVolumeStore::GetInstance()->GetVolume("BigSegmentLV")->SetSensitiveDetector(HPGeDetector);
   G4SDManager::GetSDMpointer()->AddNewDetector(HPGeDetector);
 }
