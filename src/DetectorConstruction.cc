@@ -149,7 +149,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
   G4SubtractionSolid* DetectorBoxS = new G4SubtractionSolid("DetectorBoxS", DetectorBoxS1, DetectorBoxHoleS, 0, HolePosition);
 
-  G4LogicalVolume* DetectorBoxLV = new G4LogicalVolume(DetectorBoxS, fGe, "DetectorBoxLV");
+  G4LogicalVolume* DetectorBoxLV = new G4LogicalVolume(DetectorBoxS, fAlu, "DetectorBoxLV");
   new G4PVPlacement(0,                     //no rotation
                       DetectorBoxPosition,
                       DetectorBoxLV,            //its logical volume
@@ -161,7 +161,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
   auto WindowPosition = DetectorBoxPosition + HolePosition - G4ThreeVector(0,0,0.5*(detector_window_thickness - detector_box_wall_thickness));
   G4Tubs* DetectorWindowS = new G4Tubs("DetectorWindowS",0.,detector_box_hole_radius,0.5*detector_window_thickness,0.,360.*deg);
-  G4LogicalVolume* DetectorWindowLV = new G4LogicalVolume(DetectorWindowS, fGe, "DetectorWindowLV");
+  G4LogicalVolume* DetectorWindowLV = new G4LogicalVolume(DetectorWindowS, fAlu, "DetectorWindowLV");
   new G4PVPlacement(0,                     //no rotation
                       WindowPosition,
                       DetectorWindowLV,            //its logical volume
