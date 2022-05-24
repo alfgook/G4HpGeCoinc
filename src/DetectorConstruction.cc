@@ -130,8 +130,9 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4double CrystalSizeY = 54.*mm;
   G4double CrystalSizeZ = 30.*mm;
 
-  auto CrystalPosition = G4ThreeVector(0,0,0);
-  auto DetectorBoxPosition = G4ThreeVector(0,0.5*detector_box_widthY-49.5*mm - CrystalSizeY*0.5,0.5*detector_box_height-26.8-0.5*CrystalSizeZ); 
+  // Origo at the center of the crystal in xy-plane, and flush with the top of the detector box in z-direction
+  auto CrystalPosition = G4ThreeVector(0,0,26.8*mm+CrystalSizeZ*0.5); 
+  auto DetectorBoxPosition = CrystalPosition + G4ThreeVector(0,0.5*detector_box_widthY-49.5*mm - CrystalSizeY*0.5,0.5*detector_box_height-26.8-0.5*CrystalSizeZ); 
 
   G4Box *DetectorBoxOuterS = new G4Box("DetectorBoxOuterS",0.5*detector_box_widthX,0.5*detector_box_widthY,0.5*detector_box_height);
 
