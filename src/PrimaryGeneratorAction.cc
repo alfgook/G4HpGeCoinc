@@ -57,11 +57,6 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
   fIon = G4IonTable::GetIonTable()->GetIon(fZ,fA,fEx);
   fDecayTable = fRadDecay->GetDecayTable1(fIon);
 
-  if(fVerbose>=1) {
-    fDecayTable->DumpInfo();
-  }
-
-  stableIon = false;
   if (fDecayTable == 0 || fDecayTable->entries() == 0) {
     // No data in the decay table.
     G4cout << "PrimaryGeneratorAction::GeneratePrimaries : "
@@ -77,9 +72,12 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
     fParticleGun->SetParticleDefinition(particle);
     fParticleGun->SetParticleEnergy(energy);
     fParticleGun->GeneratePrimaryVertex(event);
-    stableIon = true;
     G4cout << "Error in the activity file shooting geantino!!" << G4endl;
     return;
+  }
+
+  if(fVerbose>=1) {
+    fDecayTable->DumpInfo();
   }
 
   G4DecayProducts* products = DoDecay(*fIon);
@@ -93,6 +91,23 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
     fParticleGun->GeneratePrimaryVertex(event);
   }
 
+  if(!numberOfSecondaries) {
+    G4cout << "PrimaryGeneratorAction::GeneratePrimaries : "
+           << "decay table not defined for "
+           << fIon->GetParticleName() 
+           << G4endl;
+
+    G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
+    G4ParticleDefinition* particle = particleTable->FindParticle("geantino");
+
+    G4double energy = 1.*MeV;
+
+    fParticleGun->SetParticleDefinition(particle);
+    fParticleGun->SetParticleEnergy(energy);
+    fParticleGun->GeneratePrimaryVertex(event);
+    G4cout << "Error in the activity file shooting geantino!!" << G4endl;
+  }
+
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -101,7 +116,6 @@ PrimaryGeneratorAction::DoDecay(const G4ParticleDefinition& theParticleDef)
 {
   G4DecayProducts* products = nullptr;
   // Choose a decay channel.
-  //G4cout << "Select a channel..." << G4endl;
 
   // G4DecayTable::SelectADecayChannel checks to see if sum of daughter masses
   // exceeds parent mass. Pass it the parent mass + maximum Q value to account
@@ -109,7 +123,7 @@ PrimaryGeneratorAction::DoDecay(const G4ParticleDefinition& theParticleDef)
   G4double parentPlusQ = theParticleDef.GetPDGMass() + 30.*MeV;
   G4VDecayChannel* theDecayChannel = fDecayTable->SelectADecayChannel(parentPlusQ);
 
-  if (theDecayChannel == 0) {
+  if (!theDecayChannel) {
     // Decay channel not found.
     G4ExceptionDescription ed;
     ed << " Cannot determine decay channel for " << theParticleDef.GetParticleName() << G4endl;

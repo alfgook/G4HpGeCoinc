@@ -34,7 +34,6 @@ class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
     G4GenericMessenger* fMessenger;
     G4ParticleDefinition *fIon;
     G4DecayTable* fDecayTable;
-    bool stableIon;
 
     // parameters controlled trhough the generic messenger
     G4int fZ;
