@@ -17,6 +17,7 @@
 #include "G4UAtomicDeexcitation.hh"
 #include "G4NuclearLevelData.hh"
 #include "G4DeexPrecoParameters.hh"
+#include "G4DecayPhysics.hh"
 
 // For units of measurements
 #include "G4LossTableManager.hh"
@@ -45,6 +46,7 @@ PhysicsList::PhysicsList(): G4VModularPhysicsList()
 
   SetVerboseLevel(0);
 
+  fParticleList = new G4DecayPhysics();
   // EM physics
   emPhysicsList = new G4EmStandardPhysics_option4();
    //   emPhysicsList = new G4EmLivermorePhysics(0);
@@ -55,6 +57,7 @@ PhysicsList::PhysicsList(): G4VModularPhysicsList()
 PhysicsList::~PhysicsList()
 {
 	delete emPhysicsList;
+  delete fParticleList;
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -62,6 +65,7 @@ void PhysicsList::ConstructParticle()
 {
   
   emPhysicsList->ConstructParticle();
+  fParticleList->ConstructParticle();
   
   // pseudo-particles
   G4Geantino::GeantinoDefinition();
@@ -92,6 +96,7 @@ void PhysicsList::ConstructProcess()
 
   // em physics
 	emPhysicsList->ConstructProcess();
+  fParticleList->ConstructProcess();
 
   // decays
   G4Radioactivation* radioactiveDecay = new G4Radioactivation();
