@@ -7,10 +7,16 @@
 #include "G4PhysListFactory.hh"
 #include "G4VPhysicsConstructor.hh"
 
-// Physic lists (contained inside the Geant4 distribution)
-#include "G4EmStandardPhysics_option4.hh" /// use for "standard EM". Designed for any applications required higher accuracy of electrons, hadrons and ion tracking without magnetic field. 
-#include "G4DecayPhysics.hh"
-#include "G4RadioactiveDecayPhysics.hh"
+#include "G4EmStandardPhysics_option4.hh"
+#include "G4ParticleTypes.hh"
+#include "G4IonConstructor.hh"
+#include "G4Radioactivation.hh"
+#include "G4NuclearLevelData.hh"
+#include "G4NuclideTable.hh"
+#include "G4LossTableManager.hh"
+#include "G4UAtomicDeexcitation.hh"
+#include "G4NuclearLevelData.hh"
+#include "G4DeexPrecoParameters.hh"
 
 // For units of measurements
 #include "G4LossTableManager.hh"
@@ -20,15 +26,24 @@
 PhysicsList::PhysicsList(): G4VModularPhysicsList()
 					
 {
+  // mandatory for G4NuclideTable
+  //
+  G4NuclideTable::GetInstance()->SetThresholdOfHalfLife(0.1*picosecond);
+  G4NuclideTable::GetInstance()->SetLevelTolerance(1.0*eV);
+
+  //read new PhotonEvaporation data set 
+  //
+  G4DeexPrecoParameters* deex = 
+    G4NuclearLevelData::GetInstance()->GetParameters();
+  deex->SetCorrelatedGamma(false);
+  deex->SetStoreAllLevels(true);
+  deex->SetIsomerProduction(true);  
+  deex->SetMaxLifeTime(G4NuclideTable::GetInstance()->GetThresholdOfHalfLife()
+                /std::log(2.));
+
   defaultCutValue = 0.1* mm;
 
   SetVerboseLevel(0);
-
-  //default physics
-  fParticleList = new G4DecayPhysics();
-
-  //default physics
-  fRaddecayList = new G4RadioactiveDecayPhysics();
 
   // EM physics
   emPhysicsList = new G4EmStandardPhysics_option4();
@@ -45,8 +60,29 @@ PhysicsList::~PhysicsList()
 /////////////////////////////////////////////////////////////////////////////
 void PhysicsList::ConstructParticle()
 {
-  fParticleList->ConstructParticle();
-	emPhysicsList->ConstructParticle();
+  
+  emPhysicsList->ConstructParticle();
+  
+  // pseudo-particles
+  G4Geantino::GeantinoDefinition();
+  
+  // gamma
+  G4Gamma::GammaDefinition();
+
+  // leptons
+  G4Electron::ElectronDefinition();
+  G4Positron::PositronDefinition();
+
+  G4NeutrinoE::NeutrinoEDefinition();
+  G4AntiNeutrinoE::AntiNeutrinoEDefinition();
+  
+  // baryons
+  G4Proton::ProtonDefinition();
+  G4Neutron::NeutronDefinition();  
+
+  // ions
+  G4IonConstructor iConstructor;
+  iConstructor.ConstructParticle(); 
 }
 
 void PhysicsList::ConstructProcess()
@@ -58,8 +94,32 @@ void PhysicsList::ConstructProcess()
 	emPhysicsList->ConstructProcess();
 
   // decays
-  fParticleList->ConstructProcess();
-  fRaddecayList->ConstructProcess();
+  G4Radioactivation* radioactiveDecay = new G4Radioactivation();
+
+  G4bool ARMflag = false;
+  radioactiveDecay->SetARM(ARMflag);        //Atomic Rearangement
+
+  // need to initialize atomic deexcitation
+  //
+  G4LossTableManager* man = G4LossTableManager::Instance();
+  G4VAtomDeexcitation* deex = man->AtomDeexcitation();
+  if (!deex) {
+     ///G4EmParameters::Instance()->SetFluo(true);
+     G4EmParameters::Instance()->SetAugerCascade(ARMflag);
+     G4EmParameters::Instance()->SetDeexcitationIgnoreCut(ARMflag);    
+     deex = new G4UAtomicDeexcitation();
+     deex->InitialiseAtomicDeexcitation();
+     man->SetAtomDeexcitation(deex);
+  }
+
+  // register radioactiveDecay
+  //
+  G4PhysicsListHelper* ph = G4PhysicsListHelper::GetPhysicsListHelper();
+  ph->RegisterProcess(radioactiveDecay, G4GenericIon::GenericIon());
+
+  //printout
+  //
+  G4cout << "\n  Set atomic relaxation mode " << ARMflag << G4endl;
 }
 
 void PhysicsList::SetCuts()
