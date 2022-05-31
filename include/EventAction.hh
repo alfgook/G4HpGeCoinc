@@ -21,6 +21,10 @@ public:
   void RegisterPrimaryGamma(G4double time, G4double energy) {
     gammas.emplace_back(std::make_pair(time, energy));
   }
+
+  void SetTimeOfInitialDecay(G4double aTime) {
+    fTimeOfInitialDecay = aTime;
+  }
   
 private:
   G4int evtNo;
@@ -28,6 +32,7 @@ private:
   RunAction* fRunAction;
   
   std::vector<std::pair<G4double,G4double>> gammas;
+  G4double fTimeOfInitialDecay;
 };
 
 

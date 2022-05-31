@@ -51,14 +51,15 @@ void PhysicsList::ConstructParticle()
 
 void PhysicsList::ConstructProcess()
 {
+  // transportation
+  AddTransportation();
+
+  // em physics
 	emPhysicsList->ConstructProcess();
 
   // decays
   fParticleList->ConstructProcess();
   fRaddecayList->ConstructProcess();
-	
-  // transportation
-  AddTransportation();
 }
 
 void PhysicsList::SetCuts()

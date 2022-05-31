@@ -113,11 +113,6 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
                       0,                     //copy number
                       checkOverlaps);        //overlaps checking
 
-  // Force the detector to be drawn with wireframe
-  G4VisAttributes *WorldVisAtt = new G4VisAttributes();
-  WorldVisAtt->SetForceWireframe(true);
-  WorldLV->SetVisAttributes(WorldVisAtt);
-
   // =============== The outer box that houses the HPGe-crystal ===================================================================
   G4double detector_box_height = 120*mm;
   G4double detector_box_widthX = (2.*66.5 + 57.0)*mm;
@@ -221,6 +216,26 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
     PVposX -= SmallSegmentX;
   }
+
+  // visualization attributes
+
+  // Force the world to be drawn with wireframe
+  G4VisAttributes *WorldVisAtt = new G4VisAttributes();
+  WorldVisAtt->SetForceWireframe(true);
+  WorldLV->SetVisAttributes(WorldVisAtt);
+
+  G4VisAttributes *windowVisAtt = new G4VisAttributes();
+  windowVisAtt->SetColor(G4Color::Red());
+  DetectorWindowLV->SetVisAttributes(windowVisAtt);
+  SmallSegmentLV->SetVisAttributes(windowVisAtt);
+
+  G4VisAttributes *HPGeVisAtt = new G4VisAttributes();
+  HPGeVisAtt->SetColor(G4Color::Green());
+  HPGeCrystalLV->SetVisAttributes(HPGeVisAtt);
+
+  G4VisAttributes *BigSegmentVisAtt = new G4VisAttributes();
+  BigSegmentVisAtt->SetColor(G4Color::Blue());
+  BigSegmentLV->SetVisAttributes(BigSegmentVisAtt);
 
   //SetupDetectors();
   return WorldPV; //must return G4VPhysicalVolume pointer to the world

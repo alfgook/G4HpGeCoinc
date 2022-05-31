@@ -13,13 +13,8 @@
 #include "G4PhysicalConstants.hh"
 
 SteppingAction::SteppingAction(EventAction* evAct)
-// If you want that it inherits the functions 
-// implemented in eventAction use instead
-// SteppingAction::SteppingAction(EventAction* evAct):
-// eventAction(evAct)
 {
  
-     
 }
 
 
@@ -33,11 +28,14 @@ SteppingAction::~SteppingAction()
 
 void SteppingAction::UserSteppingAction(const G4Step* aStep)
 { 
-    
- /////////////////////////////////////////////    
- // Here implement what you want the 
- // simulation to do at every particle 
- // step 
- /////////////////////////////////////////////    
-    
+    G4cout << " aStep->GetPreStepPoint()->GetGlobalTime() = " << aStep->GetPreStepPoint()->GetGlobalTime() << G4endl;
+
+    if(aStep->GetTrack()->GetParentID()==1) {
+
+        aStep->GetPostStepPoint()->SetGlobalTime(0);
+        aStep->GetPostStepPoint()->SetLocalTime(0);
+        aStep->GetPreStepPoint()->SetGlobalTime(0);
+        aStep->GetPreStepPoint()->SetLocalTime(0);
+        aStep->GetTrack()->SetGlobalTime(0);
+    }
 }  

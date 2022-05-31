@@ -34,9 +34,20 @@ void TrackingAction::PreUserTrackingAction(const G4Track* aTrack)
 			}
 		}
 	}
-	
+
+	if(aTrack->GetParentID()==1) {
+		/*G4cout << "-- PreUserTrackingAction ---" << G4endl;
+		G4cout << "aTrack->GetGlobalTime() = " << aTrack->GetGlobalTime() << G4endl;*/
+		G4cout << "----------------------------" << G4endl;
+		((G4Track*) aTrack)->SetGlobalTime(0.);
+		((G4Track*) aTrack)->SetLocalTime(0.);
+		((G4Track*) aTrack)->SetProperTime(0.);
+	}
 }
 
 void TrackingAction::PostUserTrackingAction(const G4Track* aTrack)
 {
+	G4cout << "aTrack->GetGlobalTime() = " << aTrack->GetGlobalTime() << G4endl;
+	G4cout << "aTrack->GetLocalTime() = " << aTrack->GetLocalTime() << G4endl;
+	if(aTrack->GetParentID()==0) fEventAction->SetTimeOfInitialDecay(aTrack->GetGlobalTime());
 }

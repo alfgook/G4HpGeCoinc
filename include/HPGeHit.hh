@@ -19,7 +19,7 @@ class HPGeHit : public G4VHit
 public:
   HPGeHit();
   HPGeHit(const HPGeHit&);
-  HPGeHit(G4int VolumeCopyNo, G4int ParentID, G4int PDGcode, G4double EnergyDep, G4double Time, G4double weight);
+  HPGeHit(G4int VolumeCopyNo, G4int ParentID, G4int PDGcode, G4double EnergyDep, G4double zTime, G4double weight);
   virtual ~HPGeHit();
 
     // operators
