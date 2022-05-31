@@ -16,32 +16,34 @@
 #include "G4IonTable.hh"
 #include <iostream> 
 #include <math.h>  
+#include "G4Radioactivation.hh"
+#include "G4DecayProducts.hh"
+#include "G4DecayTable.hh"
+#include "G4GenericMessenger.hh"
+#include "G4Gamma.hh"
 
 // Define
 PrimaryGeneratorAction::PrimaryGeneratorAction()     
 : G4VUserPrimaryGeneratorAction(),
 fParticleGun(0)
 { 
-  
-  G4int nofParticles = 1;
-  fParticleGun  = new G4ParticleGun(nofParticles);
-  
 
-   G4ThreeVector position(0, 0, 0);
-   G4double energy = 0.*MeV;
-   G4ThreeVector direction(0, 0, 1);
+  fVerbose = 0;
+
+  fParticleGun  = new G4ParticleGun(1);
   
-  // Default particle kinematics
-  G4String particleName = "gamma";
-  G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
-  G4ParticleDefinition* particle
-    = particleTable->FindParticle(particleName);
+  fRadDecay = new G4Radioactivation();
 
-  fParticleGun->SetParticleDefinition(particle);
-  fParticleGun->SetParticleMomentumDirection(direction);
-  fParticleGun->SetParticleEnergy(energy);
-  fParticleGun->SetParticlePosition(position);
+  fMessenger = new G4GenericMessenger(this,"/PrimaryGeneratorAction/", "control the primary particle source");
+  fMessenger->DeclareProperty("ionZ", fZ, "Z of primary radioactive ion");
+  fMessenger->DeclareProperty("ionA", fA, "A of primary radioactive ion");
+  fMessenger->DeclarePropertyWithUnit("ionEx", "keV", fEx, "excitation energy (keV) of primary radioactive ion");
+  fMessenger->DeclareProperty("verbose", fVerbose, "verbose level");
 
+  // default ion is Cs-134
+  fZ = 55;
+  fA = 134;
+  fEx = 0.;
 }
 
 
@@ -51,15 +53,78 @@ PrimaryGeneratorAction::~PrimaryGeneratorAction()
 
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
 {
-  //This "function" is called at the begining of ecah event
-  // Monochromatic pencil like neutron beam
-
-  fParticleGun->GeneratePrimaryVertex(event);
-
   
+  fIon = G4IonTable::GetIonTable()->GetIon(fZ,fA,fEx);
+  fDecayTable = fRadDecay->GetDecayTable1(fIon);
+
+  if(fVerbose>=1) {
+    fDecayTable->DumpInfo();
+  }
+
+  stableIon = false;
+  if (fDecayTable == 0 || fDecayTable->entries() == 0) {
+    // No data in the decay table.
+    G4cout << "PrimaryGeneratorAction::GeneratePrimaries : "
+           << "decay table not defined for "
+           << fIon->GetParticleName() 
+           << G4endl;
+
+    G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
+    G4ParticleDefinition* particle = particleTable->FindParticle("geantino");
+
+    G4double energy = 1.*MeV;
+
+    fParticleGun->SetParticleDefinition(particle);
+    fParticleGun->SetParticleEnergy(energy);
+    fParticleGun->GeneratePrimaryVertex(event);
+    stableIon = true;
+    G4cout << "Error in the activity file shooting geantino!!" << G4endl;
+    return;
+  }
+
+  G4DecayProducts* products = DoDecay(*fIon);
+  G4int numberOfSecondaries = products->entries();
+  for (G4int index = 0; index < numberOfSecondaries; index++) {
+    G4DynamicParticle *secondary = (*products)[index];
+    G4ParticleDefinition* particleDef = (G4ParticleDefinition*) secondary->GetParticleDefinition();
+    fParticleGun->SetParticleDefinition(particleDef); 
+    fParticleGun->SetParticleEnergy(secondary->GetKineticEnergy());
+    fParticleGun->SetParticleMomentumDirection(secondary->GetMomentumDirection());
+    fParticleGun->GeneratePrimaryVertex(event);
+  }
+
 }
 
-  
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+G4DecayProducts*
+PrimaryGeneratorAction::DoDecay(const G4ParticleDefinition& theParticleDef)
+{
+  G4DecayProducts* products = nullptr;
+  // Choose a decay channel.
+  //G4cout << "Select a channel..." << G4endl;
+
+  // G4DecayTable::SelectADecayChannel checks to see if sum of daughter masses
+  // exceeds parent mass. Pass it the parent mass + maximum Q value to account
+  // for difference in mass defect.
+  G4double parentPlusQ = theParticleDef.GetPDGMass() + 30.*MeV;
+  G4VDecayChannel* theDecayChannel = fDecayTable->SelectADecayChannel(parentPlusQ);
+
+  if (theDecayChannel == 0) {
+    // Decay channel not found.
+    G4ExceptionDescription ed;
+    ed << " Cannot determine decay channel for " << theParticleDef.GetParticleName() << G4endl;
+    G4Exception("G4RadioactiveDecay::DoDecay", "HAD_RDM_013",
+                FatalException, ed);
+  } else {
+    // A decay channel has been identified, so execute the DecayIt.
+    //G4cout << "G4RadioactiveDecay::DoIt : selected decay channel addr: "
+    //       << theDecayChannel << G4endl;
+
+    products = theDecayChannel->DecayIt(theParticleDef.GetPDGMass() );
+  }
+
+  return products;
+}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 

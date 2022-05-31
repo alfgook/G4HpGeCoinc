@@ -28,14 +28,5 @@ SteppingAction::~SteppingAction()
 
 void SteppingAction::UserSteppingAction(const G4Step* aStep)
 { 
-    G4cout << " aStep->GetPreStepPoint()->GetGlobalTime() = " << aStep->GetPreStepPoint()->GetGlobalTime() << G4endl;
-
-    if(aStep->GetTrack()->GetParentID()==1) {
-
-        aStep->GetPostStepPoint()->SetGlobalTime(0);
-        aStep->GetPostStepPoint()->SetLocalTime(0);
-        aStep->GetPreStepPoint()->SetGlobalTime(0);
-        aStep->GetPreStepPoint()->SetLocalTime(0);
-        aStep->GetTrack()->SetGlobalTime(0);
-    }
+    
 }  

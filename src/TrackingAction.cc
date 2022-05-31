@@ -28,26 +28,13 @@ TrackingAction::~TrackingAction()
 void TrackingAction::PreUserTrackingAction(const G4Track* aTrack)
 {
 	if(aTrack->GetDefinition()==G4Gamma::Definition()) { // if the track is a gamma-ray
-		if(aTrack->GetCreatorProcess()) { // if it is not created by the PrimaryGeneratorAction
-			if(aTrack->GetCreatorProcess()->GetProcessType()==fDecay) { // if it was created by a decay process
-				fEventAction->RegisterPrimaryGamma(aTrack->GetGlobalTime(),aTrack->GetVertexKineticEnergy());
-			}
+		if(aTrack->GetCreatorProcess()->GetProcessType()==fDecay || aTrack->GetParentID()==0) { // if it was created by a decay process
+			fEventAction->RegisterPrimaryGamma(aTrack->GetGlobalTime(),aTrack->GetVertexKineticEnergy());
 		}
-	}
-
-	if(aTrack->GetParentID()==1) {
-		/*G4cout << "-- PreUserTrackingAction ---" << G4endl;
-		G4cout << "aTrack->GetGlobalTime() = " << aTrack->GetGlobalTime() << G4endl;*/
-		G4cout << "----------------------------" << G4endl;
-		((G4Track*) aTrack)->SetGlobalTime(0.);
-		((G4Track*) aTrack)->SetLocalTime(0.);
-		((G4Track*) aTrack)->SetProperTime(0.);
 	}
 }
 
 void TrackingAction::PostUserTrackingAction(const G4Track* aTrack)
 {
-	G4cout << "aTrack->GetGlobalTime() = " << aTrack->GetGlobalTime() << G4endl;
-	G4cout << "aTrack->GetLocalTime() = " << aTrack->GetLocalTime() << G4endl;
-	if(aTrack->GetParentID()==0) fEventAction->SetTimeOfInitialDecay(aTrack->GetGlobalTime());
+	
 }

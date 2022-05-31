@@ -30,7 +30,6 @@ EventAction::EventAction(RunAction* aRunAction)
   hitsCollectionID = -1;
   fRunAction = aRunAction;
   gammas.reserve(100);
-  fTimeOfInitialDecay = 0.;
 }
  
 EventAction::~EventAction()
@@ -42,7 +41,6 @@ EventAction::~EventAction()
 void EventAction::BeginOfEventAction(const G4Event* evt)
 { 
   gammas.clear();
-  fTimeOfInitialDecay = 0.;
 }
 
 void EventAction::EndOfEventAction(const G4Event* evt)
@@ -76,14 +74,7 @@ void EventAction::EndOfEventAction(const G4Event* evt)
 
     if(!Edep1) continue;
 
-    G4double dT = (time1 - fTimeOfInitialDecay);
-
-    fRunAction->AddNtupleEntry(detNbr1,Edep1,time1 - fTimeOfInitialDecay);
-    G4cout << "----------------------" << G4endl;
-    G4cout << "time1 = " << time1 << G4endl;
-    G4cout << "fTimeOfInitialDecay = " << fTimeOfInitialDecay << G4endl;
-    G4cout << "time1 - fTimeOfInitialDecay = " << time1 - fTimeOfInitialDecay << G4endl;
-    G4cout << "dT = " << dT << G4endl;
+    fRunAction->AddNtupleEntry(detNbr1,Edep1,time1);
 
     //(*hitsCollection)[i]->Print();
     if(detNbr1==0 || detNbr1==1) {
@@ -101,7 +92,6 @@ void EventAction::EndOfEventAction(const G4Event* evt)
       }
     }
   }
-  analysisManager->FillNtupleDColumn(0, fTimeOfInitialDecay);
   if(hitsCollection->entries()) fRunAction->AddNtupleRow();
 
   //------ analyse the source gamma-rays -----------

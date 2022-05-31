@@ -27,7 +27,6 @@ RunAction::RunAction(G4bool master): isMaster(master)
   analysisManager->CreateH2("E0vsE1","E0vsE1",2000,0.,4000.,2000,0.,4000.); //
 
   analysisManager->CreateNtuple("G4HPGeCoinc", "G4HPGeCoinc");
-  analysisManager->CreateNtupleDColumn("InitialDecayTime");
   analysisManager->CreateNtupleIColumn("detectorNbr",vDetectorNbrs);
   analysisManager->CreateNtupleDColumn("EnergyDeps",vEnergyDeps);
   analysisManager->CreateNtupleDColumn("Times",vTimes);
