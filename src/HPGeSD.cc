@@ -58,13 +58,7 @@ G4bool HPGeSD::ProcessHits(G4Step* aStep, G4TouchableHistory*)
 
 	G4double stepTime = aStep->GetPostStepPoint()->GetGlobalTime();
 	G4double Edep = aStep->GetTotalEnergyDeposit();
-
-	/*G4cout << "------ProcessHits()-----" << G4endl;
-	G4cout << "Edep step = " << Edep << G4endl;
-	G4cout << "Ekin step = " << aStep->GetPreStepPoint()->GetKineticEnergy() << G4endl;
-	G4cout << "copy nbr = " << VolCopyNo << G4endl;
-	G4cout << "fHitsCollection->entries() = " << fHitsCollection->entries() << G4endl;
-	G4cout << "------------------------" << G4endl;*/
+	if(Edep==0.) return true;	
 
 	const G4double detectorResolvingTime = 10.e3; // 10 micro sec
 
@@ -75,9 +69,6 @@ G4bool HPGeSD::ProcessHits(G4Step* aStep, G4TouchableHistory*)
 			  && (fabs((*fHitsCollection)[i]->GetTime() - stepTime) < detectorResolvingTime)) {
 
 			theHit = (*fHitsCollection)[i];
-			/*G4cout << "\t found hit" << G4endl;
-			G4cout << "time(hit) = " << (*fHitsCollection)[i]->GetTime() << G4endl;
-			G4cout << "Edep(hit) = " << (*fHitsCollection)[i]->GetEdep() << G4endl;*/
 
 			theHit->SetTime(std::min(theHit->GetTime(),stepTime));
 			theHit->AddEdep(Edep);

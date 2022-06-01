@@ -32,6 +32,10 @@ RunAction::RunAction(G4bool master): isMaster(master)
   analysisManager->CreateNtupleDColumn("Times",vTimes);
   analysisManager->FinishNtuple();
 
+  vTimes.reserve(50);
+  vEnergyDeps.reserve(50);
+  vDetectorNbrs.reserve(50);
+
   G4AccumulableManager* accumulableManager = G4AccumulableManager::Instance();
   fCoincCounter = new CoincCounterAccumulable("fCoincCounter");
   accumulableManager->RegisterAccumulable(fCoincCounter);

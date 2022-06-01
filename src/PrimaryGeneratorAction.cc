@@ -59,10 +59,13 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
 
   if (fDecayTable == 0 || fDecayTable->entries() == 0) {
     // No data in the decay table.
-    G4cout << "PrimaryGeneratorAction::GeneratePrimaries : "
+    if(fVerbose>=1) {
+      G4cout << "PrimaryGeneratorAction::GeneratePrimaries : "
            << "decay table not defined for "
            << fIon->GetParticleName() 
            << G4endl;
+      G4cout << "Error in the activity file shooting geantino!!" << G4endl;
+    }
 
     G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
     G4ParticleDefinition* particle = particleTable->FindParticle("geantino");
@@ -72,7 +75,6 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
     fParticleGun->SetParticleDefinition(particle);
     fParticleGun->SetParticleEnergy(energy);
     fParticleGun->GeneratePrimaryVertex(event);
-    G4cout << "Error in the activity file shooting geantino!!" << G4endl;
     return;
   }
 
@@ -81,21 +83,29 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
   }
 
   G4DecayProducts* products = DoDecay(*fIon);
-  G4int numberOfSecondaries = products->entries();
-  for (G4int index = 0; index < numberOfSecondaries; index++) {
-    G4DynamicParticle *secondary = (*products)[index];
-    G4ParticleDefinition* particleDef = (G4ParticleDefinition*) secondary->GetParticleDefinition();
-    fParticleGun->SetParticleDefinition(particleDef); 
-    fParticleGun->SetParticleEnergy(secondary->GetKineticEnergy());
-    fParticleGun->SetParticleMomentumDirection(secondary->GetMomentumDirection());
-    fParticleGun->GeneratePrimaryVertex(event);
+  G4int numberOfSecondaries = 0;
+  if(products) {
+    numberOfSecondaries = products->entries();
+    for (G4int index = 0; index < numberOfSecondaries; index++) {
+      G4DynamicParticle *secondary = (*products)[index];
+      G4ParticleDefinition* particleDef = (G4ParticleDefinition*) secondary->GetParticleDefinition();
+      fParticleGun->SetParticleDefinition(particleDef); 
+      fParticleGun->SetParticleEnergy(secondary->GetKineticEnergy());
+      fParticleGun->SetParticleMomentumDirection(secondary->GetMomentumDirection());
+      fParticleGun->GeneratePrimaryVertex(event);
+    }
+    delete products;
   }
+  
 
   if(!numberOfSecondaries) {
-    G4cout << "PrimaryGeneratorAction::GeneratePrimaries : "
+    if(fVerbose>=1) {
+      G4cout << "PrimaryGeneratorAction::GeneratePrimaries : "
            << "decay table not defined for "
            << fIon->GetParticleName() 
            << G4endl;
+      G4cout << "Error in the activity file shooting geantino!!" << G4endl;
+    }
 
     G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
     G4ParticleDefinition* particle = particleTable->FindParticle("geantino");
@@ -105,7 +115,6 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
     fParticleGun->SetParticleDefinition(particle);
     fParticleGun->SetParticleEnergy(energy);
     fParticleGun->GeneratePrimaryVertex(event);
-    G4cout << "Error in the activity file shooting geantino!!" << G4endl;
   }
 
 }

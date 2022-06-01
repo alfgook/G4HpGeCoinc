@@ -9,7 +9,6 @@
 
 #include "G4EmStandardPhysics_option4.hh"
 #include "G4ParticleTypes.hh"
-#include "G4IonConstructor.hh"
 #include "G4Radioactivation.hh"
 #include "G4NuclearLevelData.hh"
 #include "G4NuclideTable.hh"
@@ -18,6 +17,13 @@
 #include "G4NuclearLevelData.hh"
 #include "G4DeexPrecoParameters.hh"
 #include "G4DecayPhysics.hh"
+
+#include "G4BosonConstructor.hh"
+#include "G4LeptonConstructor.hh"
+#include "G4MesonConstructor.hh"
+#include "G4BaryonConstructor.hh"
+#include "G4IonConstructor.hh"
+#include "G4ShortLivedConstructor.hh"
 
 // For units of measurements
 #include "G4LossTableManager.hh"
@@ -57,13 +63,12 @@ PhysicsList::PhysicsList(): G4VModularPhysicsList()
 PhysicsList::~PhysicsList()
 {
 	delete emPhysicsList;
-  delete fParticleList;
 }
 
 /////////////////////////////////////////////////////////////////////////////
 void PhysicsList::ConstructParticle()
 {
-  
+  /*
   emPhysicsList->ConstructParticle();
   fParticleList->ConstructParticle();
   
@@ -87,6 +92,24 @@ void PhysicsList::ConstructParticle()
   // ions
   G4IonConstructor iConstructor;
   iConstructor.ConstructParticle(); 
+  */
+  G4BosonConstructor  pBosonConstructor;
+  pBosonConstructor.ConstructParticle();
+
+  G4LeptonConstructor pLeptonConstructor;
+  pLeptonConstructor.ConstructParticle();
+
+  G4MesonConstructor pMesonConstructor;
+  pMesonConstructor.ConstructParticle();
+
+  G4BaryonConstructor pBaryonConstructor;
+  pBaryonConstructor.ConstructParticle();
+
+  G4IonConstructor pIonConstructor;
+  pIonConstructor.ConstructParticle();
+
+  G4ShortLivedConstructor pShortLivedConstructor;
+  pShortLivedConstructor.ConstructParticle(); 
 }
 
 void PhysicsList::ConstructProcess()
@@ -101,7 +124,7 @@ void PhysicsList::ConstructProcess()
   // decays
   G4Radioactivation* radioactiveDecay = new G4Radioactivation();
 
-  G4bool ARMflag = false;
+  G4bool ARMflag = true;
   radioactiveDecay->SetARM(ARMflag);        //Atomic Rearangement
 
   // need to initialize atomic deexcitation

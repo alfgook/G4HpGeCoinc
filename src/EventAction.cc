@@ -72,8 +72,6 @@ void EventAction::EndOfEventAction(const G4Event* evt)
     G4double time1 = (*hitsCollection)[i]->GetTime();
     G4double Edep1 = (*hitsCollection)[i]->GetEdep()*1000.; // keV
 
-    if(!Edep1) continue;
-
     fRunAction->AddNtupleEntry(detNbr1,Edep1,time1);
 
     //(*hitsCollection)[i]->Print();
