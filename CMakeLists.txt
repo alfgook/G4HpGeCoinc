@@ -35,6 +35,10 @@ file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 #
 add_executable(G4HPGeCoinc G4HPGeCoinc.cc ${sources} ${headers})
 target_link_libraries(G4HPGeCoinc ${Geant4_LIBRARIES})
+
+#----------------------------------------------------------------------------
+# Set the c++ std
+set_target_properties(G4HPGeCoinc PROPERTIES CXX_STANDARD 17)
 #----------------------------------------------------------------------------
 # Copy all scripts to the build directory, i.e. the directory in which we
 # build ED. This is so that we can run the executable directly because it
@@ -58,14 +62,8 @@ foreach(_script ${EXAMPLEED_SCRIPTS})
 endforeach()
 
 #----------------------------------------------------------------------------
-# For internal Geant4 use - but has no effect if you build this
-# example standalone
-#
-#add_custom_target(ED DEPENDS exampleED)
-
-#----------------------------------------------------------------------------
 # Install the executable to 'bin' directory under CMAKE_INSTALL_PREFIX
 #
-install(TARGETS G4HPGeCoinc DESTINATION bin)
+#install(TARGETS G4HPGeCoinc DESTINATION bin)
 
 
