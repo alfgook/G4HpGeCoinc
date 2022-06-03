@@ -1,5 +1,6 @@
 #include "CoincCounterAccumulable.hh"
 #include <fstream> //std::ofstream
+#include <iomanip>
 
 void CoincCounterAccumulable::Merge(const G4VAccumulable& another)
 {
