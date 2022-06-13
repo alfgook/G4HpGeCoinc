@@ -16,6 +16,8 @@ class G4DecayProducts;
 class G4ParticleDefinition;
 class G4DecayTable;
 class G4GenericMessenger;
+class G4SPSPosDistribution;
+class G4SPSRandomGenerator;
 
 /// The first primary generator action class. It is of the type G4VUserPrimaryGeneratorAction
 
@@ -34,6 +36,8 @@ class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
     G4GenericMessenger* fMessenger;
     G4ParticleDefinition *fIon;
     G4DecayTable* fDecayTable;
+    G4SPSPosDistribution* fPosDist;
+    G4SPSRandomGenerator* fPosGenerator;
 
     // parameters controlled trhough the generic messenger
     G4int fZ;

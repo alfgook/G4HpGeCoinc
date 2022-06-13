@@ -21,6 +21,8 @@
 #include "G4DecayTable.hh"
 #include "G4GenericMessenger.hh"
 #include "G4Gamma.hh"
+#include "G4SPSPosDistribution.hh"
+#include "G4SPSRandomGenerator.hh"
 
 // Define
 PrimaryGeneratorAction::PrimaryGeneratorAction()     
@@ -44,6 +46,16 @@ fParticleGun(0)
   fZ = 55;
   fA = 134;
   fEx = 0.;
+
+  // position distribution
+  fPosDist = new G4SPSPosDistribution();
+  fPosGenerator = new G4SPSRandomGenerator();
+  fPosDist->SetBiasRndm(fPosGenerator);
+  fPosDist->SetPosDisType("Volume");
+  fPosDist->SetPosDisShape("Cylinder");
+  fPosDist->SetRadius(3.0*mm);
+  fPosDist->SetHalfZ(1.5*mm);
+
 }
 
 
@@ -56,6 +68,10 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
   
   fIon = G4IonTable::GetIonTable()->GetIon(fZ,fA,fEx);
   fDecayTable = fRadDecay->GetDecayTable1(fIon);
+
+  G4ThreeVector decayPos = fPosDist->GenerateOne();
+  decayPos += G4ThreeVector(0.,0.,+5.*mm);
+  G4cout << "decayPos = " << decayPos << G4endl;
 
   if (fDecayTable == 0 || fDecayTable->entries() == 0) {
     // No data in the decay table.
@@ -92,6 +108,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
       fParticleGun->SetParticleDefinition(particleDef); 
       fParticleGun->SetParticleEnergy(secondary->GetKineticEnergy());
       fParticleGun->SetParticleMomentumDirection(secondary->GetMomentumDirection());
+      fParticleGun->SetParticlePosition(decayPos);
       fParticleGun->GeneratePrimaryVertex(event);
     }
     delete products;

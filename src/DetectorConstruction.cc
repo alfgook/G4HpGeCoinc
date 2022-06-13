@@ -79,6 +79,8 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   //G4Material* BGO = nist->FindOrBuildMaterial("G4_BGO"); //Build vacuum material using the nist manager
   G4Material* air = nist->FindOrBuildMaterial("G4_AIR"); //Build vacuum material using the nist manager
   G4Material* fAlu = nist->FindOrBuildMaterial("G4_Al"); //Build vacuum material using the nist manager
+  G4Material* fPlexiGlass = nist->FindOrBuildMaterial("G4_PLEXIGLASS");
+  G4Material* fCobalt = nist->FindOrBuildMaterial("G4_Co");
 
   // Ge-crystal material
   G4Material *fGe = new G4Material("HPGe",32.,72.640*g/mole,5.323*g/cm3,kStateSolid);
@@ -216,6 +218,36 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
     PVposX -= SmallSegmentX;
   }
+
+  // =============== The Co-60 source ===================================================================
+  G4double SourceContainerRadius = 12.5*mm;
+  G4double SourceContainerThickness = 7.0*mm;
+  G4double SourceRadius = 3.0*mm;
+  G4double SourceThickness = 3.0*mm;
+
+  G4Tubs* SourceContainerS = new G4Tubs("SourceContainerS",0.,SourceContainerRadius,0.5*SourceContainerThickness,0.,360.*deg);
+  G4LogicalVolume* SourceContainerLV = new G4LogicalVolume(SourceContainerS, fPlexiGlass, "SourceContainerLV");
+    new G4PVPlacement(0,                     //no rotation
+                      G4ThreeVector(0,0,0.5*SourceContainerThickness),
+                      SourceContainerLV,            //its logical volume
+                      "SourceContainerPV",          //its name
+                      WorldLV,               //its mother volume
+                      false,                 //no boolean operation
+                      0,                     //copy number
+                      checkOverlaps);        //overlaps checking
+
+
+  G4Tubs* SourceS = new G4Tubs("SourceS",0.,SourceRadius,0.5*SourceThickness,0.,360.*deg);
+  G4LogicalVolume* SourceLV = new G4LogicalVolume(SourceS, fCobalt, "SourceLV");
+    new G4PVPlacement(0,                     //no rotation
+                      G4ThreeVector(0,0,0.5*(SourceContainerThickness-SourceThickness)-0.5*mm),
+                      SourceLV,            //its logical volume
+                      "SourcePV",          //its name
+                      SourceContainerLV,               //its mother volume
+                      false,                 //no boolean operation
+                      0,                     //copy number
+                      checkOverlaps);        //overlaps checking
+
 
   // visualization attributes
 
