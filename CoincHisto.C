@@ -1,4 +1,9 @@
 #include <vector>
+#include "TChain.h"
+#include "TBranch.h"
+#include "TRandom3.h"
+#include "TH2D.h"
+#include <iostream>
 
 void CoincHisto(const char *filename, Double_t coincTime = 100, const Double_t Emax_keV = 2000)
 {
@@ -18,11 +23,26 @@ void CoincHisto(const char *filename, Double_t coincTime = 100, const Double_t E
 	tree->SetBranchAddress("Times", &Times, &b_Times);
 
 	Long64_t nentries = tree->GetEntries();
+	std::cout << "nentries = " << nentries << std::endl;
+
+	TRandom3 rnd;
 
 	TH2D *hE1vsE2 = new TH2D("hE1vsE2","hE1vsE2;E1 (keV);E2 (keV)",500,0,Emax_keV,500,0,Emax_keV);
+	TH2D *hE1vsE2_res = new TH2D("hE1vsE2_res","hE1vsE2 (with resolution effect);E1 (keV);E2 (keV)",500,0,Emax_keV,500,0,Emax_keV);
+
+	// timing resolution
+	const Double_t sigmaT = 10./2.355; // 10 ns FWHM
+
+	// energy resolution
+	const Double_t aRes = 5.87E-04;
+    const Double_t bRes = 3.95E-04;
+    const Double_t cRes = 7.47;
 
 	for (Long64_t entry=0;entry<nentries;entry++) {
 		tree->GetEntry(entry);
+		if(entry%(nentries/100)==0) {
+			std::cout << "*" << std::flush;
+		}
 
 		size_t nHits = detectorNbr->size();
 		if(EnergyDeps->size()!=nHits) {
@@ -35,7 +55,6 @@ void CoincHisto(const char *filename, Double_t coincTime = 100, const Double_t E
 		}
 
 		for(size_t hit1=0;hit1<nHits;hit1++) {
-			if((*Times)[hit1]==0.) std::cout << (*Times).size() << std::endl;
 			if((*detectorNbr)[hit1]==7) continue; // hit is in the outer segment only
 			for(size_t hit2=hit1+1;hit2<nHits;hit2++) {
 				if((*detectorNbr)[hit2]==7) continue; // hit is in the outer segment only
@@ -43,9 +62,27 @@ void CoincHisto(const char *filename, Double_t coincTime = 100, const Double_t E
 				if(deltaT<=coincTime) {
 					hE1vsE2->Fill((*EnergyDeps)[hit1],(*EnergyDeps)[hit2]);
 				}
+
+				deltaT = rnd.Gaus((*Times)[hit2] - (*Times)[hit1],sigmaT);
+				if(fabs(deltaT)<=coincTime) {
+					Double_t sigmaE1 = 0.4246609*(aRes + bRes*sqrt((*EnergyDeps)[hit1] + cRes*(*EnergyDeps)[hit1]*(*EnergyDeps)[hit1]));
+					Double_t sigmaE2 = 0.4246609*(aRes + bRes*sqrt((*EnergyDeps)[hit2] + cRes*(*EnergyDeps)[hit2]*(*EnergyDeps)[hit2]));
+					for(int i=0;i<20;i++) {
+						Double_t E1 = rnd.Gaus((*EnergyDeps)[hit1],sigmaE1);
+						for(int j=0;j<20;j++) {
+							Double_t E2 = rnd.Gaus((*EnergyDeps)[hit2],sigmaE2);
+							if(deltaT>0) {
+								hE1vsE2_res->Fill(E1,E2,0.0025);
+							} else {
+								hE1vsE2_res->Fill(E2,E1,0.0025);
+							}
+						}
+					}
+				}
 			}
 		}
 	}
+	std::cout << std::endl;
 
 	hE1vsE2->Draw("colz");
 }
