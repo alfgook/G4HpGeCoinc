@@ -71,7 +71,6 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
 
   G4ThreeVector decayPos = fPosDist->GenerateOne();
   decayPos += G4ThreeVector(0.,0.,+5.*mm);
-  G4cout << "decayPos = " << decayPos << G4endl;
 
   if (fDecayTable == 0 || fDecayTable->entries() == 0) {
     // No data in the decay table.
