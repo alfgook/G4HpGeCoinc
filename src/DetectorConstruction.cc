@@ -67,12 +67,27 @@ DetectorConstruction::DetectorConstruction()
 DetectorConstruction::~DetectorConstruction()
 { }
 
-
-
 //Define the detector
 G4VPhysicalVolume* DetectorConstruction::Construct()
 {  
 
+  //return SegementedDetector();
+  return DualDetector();
+
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+void DetectorConstruction::ConstructSDandField()
+{
+  HPGeSD* HPGeDetector = new HPGeSD("HPGeSD","HPGeHC");
+  G4LogicalVolumeStore::GetInstance()->GetVolume("SmallSegmentLV")->SetSensitiveDetector(HPGeDetector);
+  G4LogicalVolumeStore::GetInstance()->GetVolume("BigSegmentLV")->SetSensitiveDetector(HPGeDetector);
+  G4SDManager::GetSDMpointer()->AddNewDetector(HPGeDetector);
+}
+
+G4VPhysicalVolume* DetectorConstruction::SegementedDetector()
+{
   //============= MATERIAL DEFINITION =================
   G4NistManager* nist = G4NistManager::Instance();  // Get nist material manager
   G4Material* galactic = nist->FindOrBuildMaterial("G4_Galactic"); //Build vacuum material using the nist manager
@@ -272,15 +287,99 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   //SetupDetectors();
   return WorldPV; //must return G4VPhysicalVolume pointer to the world
 
-
 }
 
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
-void DetectorConstruction::ConstructSDandField()
+G4VPhysicalVolume* DetectorConstruction::DualDetector()
 {
-  HPGeSD* HPGeDetector = new HPGeSD("HPGeSD","HPGeHC");
-  G4LogicalVolumeStore::GetInstance()->GetVolume("SmallSegmentLV")->SetSensitiveDetector(HPGeDetector);
-  G4LogicalVolumeStore::GetInstance()->GetVolume("BigSegmentLV")->SetSensitiveDetector(HPGeDetector);
-  G4SDManager::GetSDMpointer()->AddNewDetector(HPGeDetector);
+  //============= MATERIAL DEFINITION =================
+  G4NistManager* nist = G4NistManager::Instance();  // Get nist material manager
+  G4Material* galactic = nist->FindOrBuildMaterial("G4_Galactic"); //Build vacuum material using the nist manager
+  //G4Material* BGO = nist->FindOrBuildMaterial("G4_BGO"); //Build vacuum material using the nist manager
+  G4Material* air = nist->FindOrBuildMaterial("G4_AIR"); //Build vacuum material using the nist manager
+  G4Material* fAlu = nist->FindOrBuildMaterial("G4_Al"); //Build vacuum material using the nist manager
+
+  // Ge-crystal material
+  G4Material *fGe = new G4Material("HPGe",32.,72.640*g/mole,5.323*g/cm3,kStateSolid);
+
+  //============= GEOMETRY DESCRIPTION =================
+
+  // Option to switch on/off checking of volumes overlaps
+  G4bool checkOverlaps = true;
+  
+  
+  //========== World ==================================
+  G4double world_sizeXY = 50.*cm;
+  G4double world_sizeZ  = 50.*cm;
+
+  G4Box* solidWorld =
+    new G4Box("WorldSolid",                       //its name
+       0.5*world_sizeXY, 0.5*world_sizeXY, 0.5*world_sizeZ);     //its size
+
+
+  G4LogicalVolume* WorldLV =
+    new G4LogicalVolume(solidWorld,          //its solid
+                        air,           //its material
+                        "WorldLV");            //its name
+
+  G4VPhysicalVolume* WorldPV =
+    new G4PVPlacement(0,                     //no rotation
+                      G4ThreeVector(0,0,0),       //at (0,0,0)
+                      WorldLV,            //its logical volume
+                      "WorldPV",               //its name
+                      0,                     //its mother  volume
+                      false,                 //no boolean operation
+                      0,                     //copy number
+                      checkOverlaps);        //overlaps checking
+
+  // Force the detector to be drawn with wireframe
+  G4VisAttributes *WorldVisAtt = new G4VisAttributes();
+  WorldVisAtt->SetForceWireframe(true);
+  WorldLV->SetVisAttributes(WorldVisAtt);
+
+  // ========== Cylinder representing a detector crystal =======
+
+  //G4double detector_radius = 2.54*cm; // 1 inch
+  //G4double detector_length = 2.54*cm; // 1 inch 
+  G4double detector_radius = 45.4864*mm; // Mirion BE6530 
+  G4double detector_length = 30.0000*mm; // Mirion BE6530
+  G4double detector_sample_distance = 7.588*cm; // 10 % solid angle coverage
+
+  // crystal
+
+  G4Tubs* solidDetector = new G4Tubs("DetectorSolid",0.,detector_radius,0.5*detector_length,0.,360.*deg);
+
+  G4LogicalVolume* DetectorLV = 
+    new G4LogicalVolume(solidDetector,          //its solid
+                        //fLaBr,           //its material
+                        fGe,           //its material
+                        "DetectorLV");            //its name
+
+
+  /*G4VPhysicalVolume* DetectorPV =*/
+    new G4PVPlacement(0,                     //no rotation
+                      G4ThreeVector(0,0,detector_sample_distance),  //at (0,0,0)
+                      DetectorLV,            //its logical volume
+                      "DetectorPV1",          //its name
+                      WorldLV,               //its mother volume
+                      false,                 //no boolean operation
+                      0,                     //copy number
+                      checkOverlaps);        //overlaps checking
+
+
+  /*G4VPhysicalVolume* DetectorPV =*/
+    new G4PVPlacement(0,                     //no rotation
+                      G4ThreeVector(0,0,-detector_sample_distance),  //at (0,0,0)
+                      DetectorLV,            //its logical volume
+                      "DetectorPV2",          //its name
+                      WorldLV,               //its mother volume
+                      false,                 //no boolean operation
+                      1,                     //copy number
+                      checkOverlaps);        //overlaps checking
+
+  G4VisAttributes *GeVisAtt = new G4VisAttributes(G4Color::Red());
+  DetectorLV->SetVisAttributes(GeVisAtt);
+  //====================================================
+
+  //SetupDetectors();
+  return WorldPV; //must return G4VPhysicalVolume pointer to the world
 }
