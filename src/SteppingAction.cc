@@ -11,6 +11,7 @@
 #include "G4TrackStatus.hh"
 #include "G4SystemOfUnits.hh"
 #include "G4PhysicalConstants.hh"
+#include <G4UnitsTable.hh>
 
 SteppingAction::SteppingAction(EventAction* evAct)
 {
@@ -28,5 +29,5 @@ SteppingAction::~SteppingAction()
 
 void SteppingAction::UserSteppingAction(const G4Step* aStep)
 { 
-    
+    G4cout << G4BestUnit(aStep->GetPostStepPoint()->GetGlobalTime(),"Time") << G4endl;
 }  

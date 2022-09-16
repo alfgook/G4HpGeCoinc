@@ -85,4 +85,9 @@ void CoincHisto(const char *filename, Double_t coincTime = 100, const Double_t E
 	std::cout << std::endl;
 
 	hE1vsE2->Draw("colz");
+
+	TFile *fOut = new TFile("Co60_CoicHisto.root","recreate");
+	hE1vsE2->Write();
+	hE1vsE2_res->Write();
+	delete fOut;
 }
