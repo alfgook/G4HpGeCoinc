@@ -30,11 +30,11 @@ void TrackingAction::PreUserTrackingAction(const G4Track* aTrack)
 {
 	// stop and kill tracks older than 10 days
 	// if(aTrack->GetGlobalTime() > 10.*86400.*second) { // 10.*86400.*second = 10 days
-	if(aTrack->GetGlobalTime() > 100.*nanosecond) { // only the prompt decay
+	/*if(aTrack->GetGlobalTime() > 100.*nanosecond) { // only the prompt decay
 		((G4Track*) aTrack)->SetTrackStatus(fStopAndKill);
 		//G4cout << "TrackingAction::PreUserTrackingAction() aTrack->GetGlobalTime() = " << G4BestUnit(aTrack->GetGlobalTime(),"Time") << G4endl;
 		return;
-	}
+	}*/
 
 	if(aTrack->GetDefinition()==G4Gamma::Definition()) { // if the track is a gamma-ray
 		// need this else if structure because aTrack->GetCreatorProcess()

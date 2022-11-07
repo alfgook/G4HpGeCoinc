@@ -23,6 +23,9 @@ class DetectorConstruction : public G4VUserDetectorConstruction
     G4VPhysicalVolume* SegementedDetector();
     G4VPhysicalVolume* DualDetector();
     //void SetupDetectors();
+
+  private:
+    G4int DetectorType;
 };
 
 

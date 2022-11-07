@@ -4,6 +4,7 @@
 #include "TRandom3.h"
 #include "TH2D.h"
 #include <iostream>
+#include <TFile.h>
 
 void CoincHisto(const char *filename, Double_t coincTime = 100, const Double_t Emax_keV = 2000)
 {
@@ -29,6 +30,7 @@ void CoincHisto(const char *filename, Double_t coincTime = 100, const Double_t E
 
 	TH2D *hE1vsE2 = new TH2D("hE1vsE2","hE1vsE2;E1 (keV);E2 (keV)",500,0,Emax_keV,500,0,Emax_keV);
 	TH2D *hE1vsE2_res = new TH2D("hE1vsE2_res","hE1vsE2 (with resolution effect);E1 (keV);E2 (keV)",500,0,Emax_keV,500,0,Emax_keV);
+	TH2D *hEsumvsE2 = new TH2D("hEsumvsE2","hEsumvsE2;E1 (keV);E2 (keV)",500,0,Emax_keV,500,0,Emax_keV);
 
 	// timing resolution
 	const Double_t sigmaT = 10./2.355; // 10 ns FWHM
@@ -54,8 +56,10 @@ void CoincHisto(const char *filename, Double_t coincTime = 100, const Double_t E
 			break;
 		}
 
+		Double_t Esum = 0.;
 		for(size_t hit1=0;hit1<nHits;hit1++) {
 			if((*detectorNbr)[hit1]==7) continue; // hit is in the outer segment only
+			Esum += (*EnergyDeps)[hit1];
 			for(size_t hit2=hit1+1;hit2<nHits;hit2++) {
 				if((*detectorNbr)[hit2]==7) continue; // hit is in the outer segment only
 				Double_t deltaT = fabs((*Times)[hit2] - (*Times)[hit1]);
@@ -81,6 +85,28 @@ void CoincHisto(const char *filename, Double_t coincTime = 100, const Double_t E
 				}
 			}
 		}
+
+		Double_t E7 = 0.;
+		Double_t t7 = 0.;
+		for(size_t hit1=0;hit1<nHits;hit1++) {
+			if((*detectorNbr)[hit1]==7) {
+				E7 = (*EnergyDeps)[hit1];
+			}
+		}
+
+		if(E7>0.) { //if there is a hit in the outer segment
+			Double_t Esum = 0.;
+			for(size_t hit1=0;hit1<nHits;hit1++) {
+				if((*detectorNbr)[hit1]==7) continue;
+					Double_t deltaT = fabs((*Times)[hit1] - t7);
+					if(deltaT<=coincTime) {
+						Esum += (*EnergyDeps)[hit1];
+					}
+			}
+
+			hEsumvsE2->Fill(E7,Esum);
+		}
+
 	}
 	std::cout << std::endl;
 
@@ -89,5 +115,6 @@ void CoincHisto(const char *filename, Double_t coincTime = 100, const Double_t E
 	TFile *fOut = new TFile("Co60_CoicHisto.root","recreate");
 	hE1vsE2->Write();
 	hE1vsE2_res->Write();
+	hEsumvsE2->Write();
 	delete fOut;
 }

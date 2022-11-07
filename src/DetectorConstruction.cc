@@ -61,7 +61,9 @@
 
 DetectorConstruction::DetectorConstruction()
 : G4VUserDetectorConstruction()
-{ }
+{
+  DetectorType = 0; // to be set by the different construction methods
+}
 
 //Destructor
 DetectorConstruction::~DetectorConstruction()
@@ -80,14 +82,22 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
 void DetectorConstruction::ConstructSDandField()
 {
-  HPGeSD* HPGeDetector = new HPGeSD("HPGeSD","HPGeHC");
-  G4LogicalVolumeStore::GetInstance()->GetVolume("SmallSegmentLV")->SetSensitiveDetector(HPGeDetector);
-  G4LogicalVolumeStore::GetInstance()->GetVolume("BigSegmentLV")->SetSensitiveDetector(HPGeDetector);
-  G4SDManager::GetSDMpointer()->AddNewDetector(HPGeDetector);
+  if(DetectorType==2) {
+    HPGeSD* HPGeDetector = new HPGeSD("HPGeSD","HPGeHC");
+    G4LogicalVolumeStore::GetInstance()->GetVolume("SmallSegmentLV")->SetSensitiveDetector(HPGeDetector);
+    G4LogicalVolumeStore::GetInstance()->GetVolume("BigSegmentLV")->SetSensitiveDetector(HPGeDetector);
+    G4SDManager::GetSDMpointer()->AddNewDetector(HPGeDetector);
+  } else if(DetectorType==1) {
+    HPGeSD* HPGeDetector = new HPGeSD("HPGeSD","HPGeHC");
+    G4LogicalVolume *logicVolume = G4LogicalVolumeStore::GetInstance()->GetVolume("DetectorLV");
+    logicVolume->SetSensitiveDetector(HPGeDetector);
+    G4SDManager::GetSDMpointer()->AddNewDetector(HPGeDetector);
+  }
 }
 
 G4VPhysicalVolume* DetectorConstruction::SegementedDetector()
 {
+  DetectorType = 2;
   //============= MATERIAL DEFINITION =================
   G4NistManager* nist = G4NistManager::Instance();  // Get nist material manager
   G4Material* galactic = nist->FindOrBuildMaterial("G4_Galactic"); //Build vacuum material using the nist manager
@@ -291,6 +301,7 @@ G4VPhysicalVolume* DetectorConstruction::SegementedDetector()
 
 G4VPhysicalVolume* DetectorConstruction::DualDetector()
 {
+  DetectorType = 1;
   //============= MATERIAL DEFINITION =================
   G4NistManager* nist = G4NistManager::Instance();  // Get nist material manager
   G4Material* galactic = nist->FindOrBuildMaterial("G4_Galactic"); //Build vacuum material using the nist manager
@@ -340,9 +351,14 @@ G4VPhysicalVolume* DetectorConstruction::DualDetector()
 
   //G4double detector_radius = 2.54*cm; // 1 inch
   //G4double detector_length = 2.54*cm; // 1 inch 
-  G4double detector_radius = 45.4864*mm; // Mirion BE6530 
-  G4double detector_length = 30.0000*mm; // Mirion BE6530
-  G4double detector_sample_distance = 7.588*cm; // 10 % solid angle coverage
+
+  //G4double detector_radius = 45.4864*mm; // Mirion BE6530 
+  //G4double detector_length = 30.0000*mm; // Mirion BE6530
+  //G4double detector_sample_distance = 7.588*cm; // 10 % solid angle coverage
+
+  G4double detector_radius = 25.0000*mm; // test comparson with Olena's serpent results
+  G4double detector_length = 50.0000*mm; // test comparson with Olena's serpent results
+  G4double detector_sample_distance = 5.00*cm + detector_length*0.5; // test comparson with Olena's serpent results
 
   // crystal
 
