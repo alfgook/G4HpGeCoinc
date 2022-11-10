@@ -127,6 +127,7 @@ int main(int argc,char** argv)
     UImanager->ApplyCommand(command+macro);
   }
   else {// interactive mode : define UI session
+    UImanager->ApplyCommand("/control/execute detectorSetup.mac");
     UImanager->ApplyCommand("/control/execute init_vis.mac"); 
     if (ui->IsGUI()) {
        UImanager->ApplyCommand("/control/execute icons.mac");

@@ -42,9 +42,9 @@ fParticleGun(0)
   fMessenger->DeclarePropertyWithUnit("ionEx", "keV", fEx, "excitation energy (keV) of primary radioactive ion");
   fMessenger->DeclareProperty("verbose", fVerbose, "verbose level");
 
-  // default ion is Cs-134
-  fZ = 55;
-  fA = 134;
+  // default ion is La-140
+  fZ = 57;
+  fA = 140;
   fEx = 0.;
 
   // position distribution

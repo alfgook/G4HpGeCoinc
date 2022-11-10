@@ -30,4 +30,10 @@ SteppingAction::~SteppingAction()
 void SteppingAction::UserSteppingAction(const G4Step* aStep)
 { 
     G4cout << G4BestUnit(aStep->GetPostStepPoint()->GetGlobalTime(),"Time") << G4endl;
+
+    G4StepPoint* preStepPoint = aStep->GetPreStepPoint();
+    G4TouchableHistory* theTouchable = (G4TouchableHistory*)(preStepPoint->GetTouchable());
+    G4int copyNo = theTouchable->GetVolume()->GetCopyNo();
+
+    G4cout << "copyNo = " << copyNo << G4endl;
 }  

@@ -51,11 +51,22 @@
 #include "G4Isotope.hh"
 #include "G4SubtractionSolid.hh"
 #include "G4VisAttributes.hh"
+#include "G4PVReplica.hh"
+#include <string>
+#include "G4GenericMessenger.hh"
+#include "PlanarParameterization.hh"
+#include "G4PVParameterised.hh"
+#include "G4Polycone.hh"
 
 //inlcudes for the sensitive detector
 #include "HPGeSD.hh"
 #include "G4SDManager.hh"
 #include "G4LogicalVolumeStore.hh"
+#include "G4PhysicalVolumeStore.hh"
+#include "G4SolidStore.hh"
+# include "G4UnionSolid.hh"
+# include "G4Polyhedra.hh"
+
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
@@ -63,6 +74,43 @@ DetectorConstruction::DetectorConstruction()
 : G4VUserDetectorConstruction()
 {
   DetectorType = 0; // to be set by the different construction methods
+
+  nSegmentsX = 3;
+  nSegmentsY = 3;
+
+  // parameters of the planar segmented
+  sizeX = 80.*mm;
+  sizeY = 80.*mm;
+  sizeZ = 25.*mm;
+
+  // parameters of the segmented clover
+  cloverRadius = 40.*mm;
+  cloverLength = 90.*mm;
+  cavityRadius = 7.5*mm;
+  cavityDepth = cloverLength*0.9;
+  nVerticalSegments = 8;
+
+  HPGeDetector = nullptr;
+  fGe = nullptr;
+
+  fMessenger = new G4GenericMessenger(this,"/DetectorConstruction/", "control the detector construction");
+  fMessenger->DeclareProperty("detectorType", DetectorType, "type of detector (1 = dual detector, 2 = segmented detector, 3 = planar segmented)");
+  fMessenger->DeclareProperty("nSegmentsX", nSegmentsX, "number of segments in X direction");
+  fMessenger->DeclareProperty("nSegmentsY", nSegmentsY, "number of segments in Y direction");
+  fMessenger->DeclarePropertyWithUnit("SizeX", "mm", sizeX, "size of detector in x direction");
+  fMessenger->DeclarePropertyWithUnit("SizeY", "mm", sizeY, "size of detector in y direction");
+  fMessenger->DeclarePropertyWithUnit("SizeZ", "mm", sizeZ, "size of detector in z direction (depth)");
+
+  fMessenger->DeclareProperty("nVerticalSegments", nVerticalSegments, "number of vertical segments");
+  fMessenger->DeclarePropertyWithUnit("cloverRadius", "mm", cloverRadius, "radius of circular part of clover");
+  fMessenger->DeclarePropertyWithUnit("cloverLength", "mm", cloverLength, "total length of clover");
+  fMessenger->DeclarePropertyWithUnit("cavityRadius", "mm", cavityRadius, "radius of the cavity");
+  fMessenger->DeclarePropertyWithUnit("cavityDepth", "mm", cavityDepth, "depth of the cavity (must be smaller than length*(1+1/n), where n is the number of vertical segments)");
+
+
+  fMessenger->DeclareMethod("Rebuild",&DetectorConstruction::Rebuild,
+    "Rebuilds the detector").SetStates(G4State_PreInit, G4State_Idle);
+
 }
 
 //Destructor
@@ -73,29 +121,55 @@ DetectorConstruction::~DetectorConstruction()
 G4VPhysicalVolume* DetectorConstruction::Construct()
 {  
 
-  //return SegementedDetector();
+  G4cout << "DetectorConstruction::Construct()" << G4endl;
+  if(DetectorType==2) return SegmentedDetector();
+  if(DetectorType==3) return PlanarSegmented();
+  if(DetectorType==4) return SegmentedClover();
+  if(DetectorType==5) return SegmentedClover2();
   return DualDetector();
-
+  
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 void DetectorConstruction::ConstructSDandField()
 {
+
+  if(HPGeDetector == nullptr) HPGeDetector = new HPGeSD("HPGeSD","HPGeHC");
+
   if(DetectorType==2) {
-    HPGeSD* HPGeDetector = new HPGeSD("HPGeSD","HPGeHC");
     G4LogicalVolumeStore::GetInstance()->GetVolume("SmallSegmentLV")->SetSensitiveDetector(HPGeDetector);
     G4LogicalVolumeStore::GetInstance()->GetVolume("BigSegmentLV")->SetSensitiveDetector(HPGeDetector);
     G4SDManager::GetSDMpointer()->AddNewDetector(HPGeDetector);
   } else if(DetectorType==1) {
-    HPGeSD* HPGeDetector = new HPGeSD("HPGeSD","HPGeHC");
     G4LogicalVolume *logicVolume = G4LogicalVolumeStore::GetInstance()->GetVolume("DetectorLV");
     logicVolume->SetSensitiveDetector(HPGeDetector);
     G4SDManager::GetSDMpointer()->AddNewDetector(HPGeDetector);
+  } else if(DetectorType==3) {
+    G4LogicalVolume *logicVolume = G4LogicalVolumeStore::GetInstance()->GetVolume("SegmentLV");
+    logicVolume->SetSensitiveDetector(HPGeDetector);
+    G4SDManager::GetSDMpointer()->AddNewDetector(HPGeDetector);
   }
+
+  /*G4cout << "---DetectorConstruction::ConstructSDandField()" << G4endl;
+  G4PhysicalVolumeStore *PVstore = G4PhysicalVolumeStore::GetInstance();
+  for (auto i=PVstore->begin(); i!=PVstore->end(); i++) {
+    G4cout << (*i)->GetName() << " : " << (*i)->GetCopyNo() << G4endl;
+  }*/
 }
 
-G4VPhysicalVolume* DetectorConstruction::SegementedDetector()
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+void DetectorConstruction::Rebuild()
+{
+
+  G4cout << "DetectorConstruction::Rebuild()" << G4endl;
+  G4RunManager::GetRunManager()->ReinitializeGeometry(true,true);
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+G4VPhysicalVolume* DetectorConstruction::SegmentedDetector()
 {
   DetectorType = 2;
   //============= MATERIAL DEFINITION =================
@@ -108,7 +182,7 @@ G4VPhysicalVolume* DetectorConstruction::SegementedDetector()
   G4Material* fCobalt = nist->FindOrBuildMaterial("G4_Co");
 
   // Ge-crystal material
-  G4Material *fGe = new G4Material("HPGe",32.,72.640*g/mole,5.323*g/cm3,kStateSolid);
+  if(fGe==nullptr) fGe = new G4Material("HPGe",32.,72.640*g/mole,5.323*g/cm3,kStateSolid);
 
   //============= GEOMETRY DESCRIPTION =================
 
@@ -125,7 +199,7 @@ G4VPhysicalVolume* DetectorConstruction::SegementedDetector()
        0.5*world_sizeXY, 0.5*world_sizeXY, 0.5*world_sizeZ);     //its size
 
 
-  G4LogicalVolume* WorldLV =
+  WorldLV =
     new G4LogicalVolume(solidWorld,          //its solid
                         air,           //its material
                         "WorldLV");            //its name
@@ -310,7 +384,7 @@ G4VPhysicalVolume* DetectorConstruction::DualDetector()
   G4Material* fAlu = nist->FindOrBuildMaterial("G4_Al"); //Build vacuum material using the nist manager
 
   // Ge-crystal material
-  G4Material *fGe = new G4Material("HPGe",32.,72.640*g/mole,5.323*g/cm3,kStateSolid);
+  if(fGe==nullptr) fGe = new G4Material("HPGe",32.,72.640*g/mole,5.323*g/cm3,kStateSolid);
 
   //============= GEOMETRY DESCRIPTION =================
 
@@ -327,7 +401,7 @@ G4VPhysicalVolume* DetectorConstruction::DualDetector()
        0.5*world_sizeXY, 0.5*world_sizeXY, 0.5*world_sizeZ);     //its size
 
 
-  G4LogicalVolume* WorldLV =
+  WorldLV =
     new G4LogicalVolume(solidWorld,          //its solid
                         air,           //its material
                         "WorldLV");            //its name
@@ -397,5 +471,458 @@ G4VPhysicalVolume* DetectorConstruction::DualDetector()
   //====================================================
 
   //SetupDetectors();
+  return WorldPV; //must return G4VPhysicalVolume pointer to the world
+}
+
+G4VPhysicalVolume* DetectorConstruction::PlanarSegmented()
+{
+  DetectorType = 3;
+  //============= MATERIAL DEFINITION =================
+  G4NistManager* nist = G4NistManager::Instance();  // Get nist material manager
+  G4Material* galactic = nist->FindOrBuildMaterial("G4_Galactic"); //Build vacuum material using the nist manager
+  //G4Material* BGO = nist->FindOrBuildMaterial("G4_BGO"); //Build vacuum material using the nist manager
+  G4Material* air = nist->FindOrBuildMaterial("G4_AIR"); //Build vacuum material using the nist manager
+  G4Material* fAlu = nist->FindOrBuildMaterial("G4_Al"); //Build vacuum material using the nist manager
+
+  // Ge-crystal material
+  if(fGe==nullptr) fGe = new G4Material("HPGe",32.,72.640*g/mole,5.323*g/cm3,kStateSolid);
+
+  //============= GEOMETRY DESCRIPTION =================
+
+  // Option to switch on/off checking of volumes overlaps
+  G4bool checkOverlaps = true;
+  
+  
+  //========== World ==================================
+  G4double world_sizeXY = 50.*cm;
+  G4double world_sizeZ  = 50.*cm;
+
+  G4Box* solidWorld =
+    new G4Box("WorldSolid",                       //its name
+       0.5*world_sizeXY, 0.5*world_sizeXY, 0.5*world_sizeZ);     //its size
+
+
+  WorldLV =
+    new G4LogicalVolume(solidWorld,          //its solid
+                        air,           //its material
+                        "WorldLV");            //its name
+
+  G4VPhysicalVolume* WorldPV =
+    new G4PVPlacement(0,                     //no rotation
+                      G4ThreeVector(0,0,0),       //at (0,0,0)
+                      WorldLV,            //its logical volume
+                      "WorldPV",               //its name
+                      0,                     //its mother  volume
+                      false,                 //no boolean operation
+                      0,                     //copy number
+                      checkOverlaps);        //overlaps checking
+
+  // Force the detector to be drawn with wireframe
+  G4VisAttributes *WorldVisAtt = new G4VisAttributes();
+  WorldVisAtt->SetForceWireframe(true);
+  WorldLV->SetVisAttributes(WorldVisAtt);
+
+  // ========== Detector crystal =======
+
+  G4cout << "DetectorConstruction::PlanarSegmented()" << G4endl;
+  G4cout << "nSegmentsX = " << nSegmentsX << G4endl;
+  G4cout << "nSegmentsY = " << nSegmentsY << G4endl;
+
+  G4double z0 = 5*cm; //distance from center to each detector plane
+  
+  // crystal
+
+  // The full detector volume to be filled with segments
+  SegmentS = new G4Box("SegmentS",sizeX*0.5/nSegmentsX,sizeY*0.5/nSegmentsY,0.5*sizeZ);
+  G4LogicalVolume *SegmentLV = new G4LogicalVolume(SegmentS,fGe,"SegmentLV");
+
+  G4double SegmentSizeX = sizeX/nSegmentsX;
+  G4double SegmentSizeY = sizeY/nSegmentsY;
+  G4int copyno = 0;
+
+  // first plane of detector-segments at - z0
+  for(G4int col=0;col<nSegmentsX;col++) {
+    G4double x = SegmentSizeX*(col - G4double(nSegmentsX)*0.5 + 0.5);
+    for(G4int row=0;row<nSegmentsX;row++) {
+      G4double y = SegmentSizeY*(row - G4double(nSegmentsY)*0.5 + 0.5);
+
+      G4String name = "SegmentPV_" + std::to_string(copyno);
+      G4VPhysicalVolume *segmentPV = new G4PVPlacement(0,                     //no rotation
+                      G4ThreeVector(x,y,-z0),       //at (0,0,0)
+                      SegmentLV,            //its logical volume
+                      name,               //its name
+                      WorldLV,                     //its mother  volume
+                      false,                 //no boolean operation
+                      copyno,                     //copy number
+                      checkOverlaps);        //overlaps checking
+      SegmentsPV.emplace_back(segmentPV);
+      ++copyno;
+    }
+  }
+
+  // second plane of detector-segments at + z0
+  for(G4int col=0;col<nSegmentsX;col++) {
+    G4double x = SegmentSizeX*(col - G4double(nSegmentsX)*0.5 + 0.5);
+    for(G4int row=0;row<nSegmentsX;row++) {
+      G4double y = SegmentSizeY*(row - G4double(nSegmentsY)*0.5 + 0.5);
+
+      G4String name = "SegmentPV_" + std::to_string(copyno);
+      G4VPhysicalVolume *segmentPV = new G4PVPlacement(0,                     //no rotation
+                      G4ThreeVector(x,y,z0),       //at (0,0,0)
+                      SegmentLV,            //its logical volume
+                      name,               //its name
+                      WorldLV,                     //its mother  volume
+                      false,                 //no boolean operation
+                      copyno,                     //copy number
+                      checkOverlaps);        //overlaps checking
+      SegmentsPV.emplace_back(segmentPV);
+      ++copyno;
+    }
+  }
+
+  //====================================================
+
+  return WorldPV; //must return G4VPhysicalVolume pointer to the world
+}
+
+
+G4VPhysicalVolume* DetectorConstruction::SegmentedClover()
+{
+  DetectorType = 4;
+  //============= MATERIAL DEFINITION =================
+  G4NistManager* nist = G4NistManager::Instance();  // Get nist material manager
+  G4Material* galactic = nist->FindOrBuildMaterial("G4_Galactic"); //Build vacuum material using the nist manager
+  //G4Material* BGO = nist->FindOrBuildMaterial("G4_BGO"); //Build vacuum material using the nist manager
+  G4Material* air = nist->FindOrBuildMaterial("G4_AIR"); //Build vacuum material using the nist manager
+  G4Material* fAlu = nist->FindOrBuildMaterial("G4_Al"); //Build vacuum material using the nist manager
+
+  G4cout << "****************" << G4endl;
+  G4cout << "nVerticalSegments = " << nVerticalSegments << G4endl;
+  G4cout << "****************" << G4endl;
+  // Ge-crystal material
+  if(fGe==nullptr) fGe = new G4Material("HPGe",32.,72.640*g/mole,5.323*g/cm3,kStateSolid);
+
+  //============= GEOMETRY DESCRIPTION =================
+
+  // Option to switch on/off checking of volumes overlaps
+  G4bool checkOverlaps = true;
+  
+  
+  //========== World ==================================
+  G4double world_sizeXY = 50.*cm;
+  G4double world_sizeZ  = 50.*cm;
+
+  G4Box* solidWorld =
+    new G4Box("WorldSolid",                       //its name
+       0.5*world_sizeXY, 0.5*world_sizeXY, 0.5*world_sizeZ);     //its size
+
+
+  WorldLV =
+    new G4LogicalVolume(solidWorld,          //its solid
+                        air,           //its material
+                        "WorldLV");            //its name
+
+  G4VPhysicalVolume* WorldPV =
+    new G4PVPlacement(0,                     //no rotation
+                      G4ThreeVector(0,0,0),       //at (0,0,0)
+                      WorldLV,            //its logical volume
+                      "WorldPV",               //its name
+                      0,                     //its mother  volume
+                      false,                 //no boolean operation
+                      0,                     //copy number
+                      checkOverlaps);        //overlaps checking
+
+  // Force the detector to be drawn with wireframe
+  G4VisAttributes *WorldVisAtt = new G4VisAttributes();
+  WorldVisAtt->SetForceWireframe(true);
+  WorldLV->SetVisAttributes(WorldVisAtt);
+
+  // ========== Detector crystal =======
+
+  G4double bottomThickness = cloverLength - cavityDepth;
+  G4double curCloverLength = cloverLength/nVerticalSegments;
+  if(bottomThickness>=curCloverLength) bottomThickness = curCloverLength;
+
+  G4Tubs *tub = new G4Tubs("tubS",
+                            0.,
+                            cloverRadius,
+                            curCloverLength*0.5,
+                            0.*deg,
+                            180.*deg);
+
+  G4Box *box = new G4Box("WorldSolid",
+                          cloverRadius/sqrt(2.),
+                          cloverRadius/sqrt(2.),
+                          curCloverLength*0.5);
+
+  G4RotationMatrix* zRot = new G4RotationMatrix; // Rotates X and Z axes only
+  zRot->rotateZ(45.*deg); 
+  G4UnionSolid* tub_and_box = new G4UnionSolid("tub_and_box",
+                                          box,
+                                          tub,
+                                          zRot,
+                                          G4ThreeVector(0,0,0));
+
+
+  G4Tubs *cavityS = new G4Tubs("cavityS",
+                            0.,
+                            cavityRadius,
+                            curCloverLength*0.5 + 1*mm,
+                            0.*deg,
+                            360.*deg);
+
+  G4SubtractionSolid* cloverLeafBottomS = new G4SubtractionSolid(
+                                        "cloverLeafBottomS",
+                                        tub_and_box,
+                                        cavityS,
+                                        0,
+                                        G4ThreeVector(-cloverRadius/sqrt(2.),-cloverRadius/sqrt(2.),bottomThickness+2.*mm)
+                                        );
+  G4LogicalVolume *cloverLeafBottomLV = new G4LogicalVolume(cloverLeafBottomS, fGe, "cloverLeafBottomLV");
+
+  G4SubtractionSolid* cloverLeafOtherS = new G4SubtractionSolid(
+                                        "cloverLeafOtherS",
+                                        tub_and_box,
+                                        cavityS,
+                                        0,
+                                        G4ThreeVector(-cloverRadius/sqrt(2.),-cloverRadius/sqrt(2.),0)
+                                        );
+  G4LogicalVolume *cloverLeafOtherLV = new G4LogicalVolume(cloverLeafOtherS, fGe, "cloverLeafOtherLV");
+
+  G4double zpos0 = -(cloverLength*0.5 - curCloverLength*0.5);
+  G4int copyno = 0;
+  //first the bottom segment
+  for(G4int i=0;i<4;i++) {
+    G4ThreeVector pos(cloverRadius/sqrt(2.),cloverRadius/sqrt(2.),zpos0);
+    G4RotationMatrix* Rot = new G4RotationMatrix;
+    Rot->rotateZ(i*90*deg);
+    
+    pos = (*Rot) * pos;
+
+    G4String name = "cloverLeafPV" + std::to_string(copyno);
+    new G4PVPlacement(G4Transform3D(*Rot,pos),
+                      cloverLeafBottomLV,            //its logical volume
+                      name,               //its name
+                      WorldLV,                     //its mother  volume
+                      false,                 //no boolean operation
+                      copyno++,                     //copy number
+                      checkOverlaps);        //overlaps checking
+  }
+
+  // now the other ones
+  for(G4int segment=1;segment<nVerticalSegments;segment++) {
+    G4double zpos = segment*curCloverLength + zpos0;
+    for(G4int i=0;i<4;i++) {
+      G4ThreeVector pos(cloverRadius/sqrt(2.),cloverRadius/sqrt(2.),zpos);
+      G4RotationMatrix* Rot = new G4RotationMatrix;
+      Rot->rotateZ(i*90*deg);
+      
+      pos = (*Rot) * pos;
+
+      G4String name = "cloverLeafPV" + std::to_string(copyno);
+      new G4PVPlacement(G4Transform3D(*Rot,pos),
+                        cloverLeafOtherLV,            //its logical volume
+                        name,               //its name
+                        WorldLV,                     //its mother  volume
+                        false,                 //no boolean operation
+                        copyno++,                     //copy number
+                        checkOverlaps);        //overlaps checking
+    }
+  }
+  
+  //====================================================
+
+  return WorldPV; //must return G4VPhysicalVolume pointer to the world
+}
+
+
+G4VPhysicalVolume* DetectorConstruction::SegmentedClover2()
+{
+  DetectorType = 5;
+  //============= MATERIAL DEFINITION =================
+  G4NistManager* nist = G4NistManager::Instance();  // Get nist material manager
+  G4Material* galactic = nist->FindOrBuildMaterial("G4_Galactic"); //Build vacuum material using the nist manager
+  //G4Material* BGO = nist->FindOrBuildMaterial("G4_BGO"); //Build vacuum material using the nist manager
+  G4Material* air = nist->FindOrBuildMaterial("G4_AIR"); //Build vacuum material using the nist manager
+  G4Material* fAlu = nist->FindOrBuildMaterial("G4_Al"); //Build vacuum material using the nist manager
+
+  G4cout << "****************" << G4endl;
+  G4cout << "nVerticalSegments = " << nVerticalSegments << G4endl;
+  G4cout << "****************" << G4endl;
+  // Ge-crystal material
+  if(fGe==nullptr) fGe = new G4Material("HPGe",32.,72.640*g/mole,5.323*g/cm3,kStateSolid);
+
+  //============= GEOMETRY DESCRIPTION =================
+
+  // Option to switch on/off checking of volumes overlaps
+  G4bool checkOverlaps = true;
+  
+  
+  //========== World ==================================
+  G4double world_sizeXY = 50.*cm;
+  G4double world_sizeZ  = 50.*cm;
+
+  G4Box* solidWorld =
+    new G4Box("WorldSolid",                       //its name
+       0.5*world_sizeXY, 0.5*world_sizeXY, 0.5*world_sizeZ);     //its size
+
+
+  WorldLV =
+    new G4LogicalVolume(solidWorld,          //its solid
+                        air,           //its material
+                        "WorldLV");            //its name
+
+  G4VPhysicalVolume* WorldPV =
+    new G4PVPlacement(0,                     //no rotation
+                      G4ThreeVector(0,0,0),       //at (0,0,0)
+                      WorldLV,            //its logical volume
+                      "WorldPV",               //its name
+                      0,                     //its mother  volume
+                      false,                 //no boolean operation
+                      0,                     //copy number
+                      checkOverlaps);        //overlaps checking
+
+  // Force the detector to be drawn with wireframe
+  G4VisAttributes *WorldVisAtt = new G4VisAttributes();
+  WorldVisAtt->SetForceWireframe(true);
+  WorldLV->SetVisAttributes(WorldVisAtt);
+
+  //============== Aluminum casing around the detector ================
+
+
+  G4double bottomThickness = cloverLength - cavityDepth;
+  G4double curCloverLength = cloverLength/nVerticalSegments;
+  if(bottomThickness>=curCloverLength) bottomThickness = curCloverLength;
+  G4double minWallThickness = 0.5*mm;
+  G4double innerRad = cavityRadius-minWallThickness;
+  G4double outerRad = cloverRadius*(1.+tan(30*deg))+minWallThickness;
+  G4double zPlane1[] = {-(cloverLength*0.5+minWallThickness),
+                        -(cloverLength*0.5+minWallThickness),
+                        (bottomThickness-cloverLength*0.5)+minWallThickness,
+                        (bottomThickness-cloverLength*0.5)+minWallThickness,
+                        +cloverLength*0.5+minWallThickness,
+                        +cloverLength*0.5+minWallThickness};
+  G4double rInner1[] = {0,0,0,innerRad,innerRad,innerRad};
+  G4double rOuter1[] = {outerRad,outerRad,outerRad,outerRad,outerRad,outerRad};
+/*
+  G4Polycone *casingS = new G4Polycone("casingS",
+                                        0.,
+                                        360.*deg,
+                                        6,
+                                        zPlane1,
+                                        rInner1,
+                                        rOuter1);
+*/
+  G4Polyhedra *casingS = new G4Polyhedra("casingS",
+                                        0,
+                                        360.*deg,
+                                        6,
+                                        6,
+                                        zPlane1,
+                                        rInner1,
+                                        rOuter1);
+
+  G4LogicalVolume *casingLV = new G4LogicalVolume(casingS, fAlu, "cloverLeafBottomLV");
+
+  G4VPhysicalVolume* casingPV =
+    new G4PVPlacement(0,                     //no rotation
+                      G4ThreeVector(0,0,0),       //at (0,0,0)
+                      casingLV,            //its logical volume
+                      "casingPV",               //its name
+                      WorldLV,                     //its mother  volume
+                      false,                 //no boolean operation
+                      0,                     //copy number
+                      checkOverlaps);        //overlaps checking
+
+  // ========== Detector crystal =======
+
+  G4double zPlane[] = {-curCloverLength*0.5,-curCloverLength*0.5,bottomThickness-curCloverLength*0.5,bottomThickness-curCloverLength*0.5,+curCloverLength*0.5,+curCloverLength*0.5};
+  G4double rInner[] = {0,0,0,cavityRadius,cavityRadius,cavityRadius};
+  G4double rOuter[] = {cloverRadius,cloverRadius,cloverRadius,cloverRadius,cloverRadius,cloverRadius};
+  G4Polyhedra *hexagonS = new G4Polyhedra("hexagonS",
+                                        0,
+                                        60.*deg,
+                                        1,
+                                        6,
+                                        zPlane,
+                                        rInner,
+                                        rOuter);
+
+  G4Tubs *tub = new G4Tubs("tubS",
+                            0.,
+                            cloverRadius*tan(30*deg),
+                            curCloverLength*0.5,
+                            0.*deg,
+                            180.*deg);
+  G4RotationMatrix* Rot = new G4RotationMatrix;
+  Rot->rotateZ(60*deg);
+  G4ThreeVector pos(cloverRadius*sin(60*deg),cloverRadius*cos(60.*deg),0);
+
+  G4UnionSolid* cloverLeafS = new G4UnionSolid("cloverLeafS",
+                                          hexagonS,
+                                          tub,
+                                          Rot,
+                                          pos);
+
+  G4LogicalVolume *cloverLeafBottomLV = new G4LogicalVolume(cloverLeafS, fGe, "cloverLeafBottomLV");
+
+  G4double zPlane2[] = {-curCloverLength*0.5,-curCloverLength*0.5,+curCloverLength*0.5,+curCloverLength*0.5};
+  G4double rInner2[] = {cavityRadius,cavityRadius,cavityRadius,cavityRadius};
+  G4double rOuter2[] = {cloverRadius,cloverRadius,cloverRadius,cloverRadius};
+  G4Polyhedra *hexagonS2 = new G4Polyhedra("hexagonS2",
+                                        0,
+                                        60.*deg,
+                                        1,
+                                        4,
+                                        zPlane2,
+                                        rInner2,
+                                        rOuter2);
+
+  G4UnionSolid* cloverLeafS2 = new G4UnionSolid("cloverLeafS2",
+                                          hexagonS2,
+                                          tub,
+                                          Rot,
+                                          pos);
+
+  G4LogicalVolume *cloverLeafOtherLV = new G4LogicalVolume(cloverLeafS2, fGe, "cloverLeafOtherLV");
+  //====================================================
+
+  G4double zpos0 = -(cloverLength*0.5 - curCloverLength*0.5);
+  G4int copyno = 0;
+  //first the bottom segment
+  for(G4int i=0;i<6;i++) {
+    G4ThreeVector curpos(0,0,zpos0);
+    G4RotationMatrix* curRot = new G4RotationMatrix;
+    curRot->rotateZ(i*60*deg);
+
+    G4String name = "cloverLeafPV" + std::to_string(copyno);
+    new G4PVPlacement(G4Transform3D(*curRot,curpos),
+                      cloverLeafBottomLV,            //its logical volume
+                      name,               //its name
+                      casingLV,                     //its mother  volume
+                      false,                 //no boolean operation
+                      copyno++,                     //copy number
+                      checkOverlaps);        //overlaps checking
+  }
+
+  // now the other ones
+  for(G4int segment=1;segment<nVerticalSegments;segment++) {
+    G4double zpos = segment*curCloverLength + zpos0;
+    for(G4int i=0;i<6;i++) {
+      G4ThreeVector curpos(0,0,zpos);
+      G4RotationMatrix* curRot = new G4RotationMatrix;
+      curRot->rotateZ(i*60*deg);
+
+      G4String name = "cloverLeafPV" + std::to_string(copyno);
+      new G4PVPlacement(G4Transform3D(*curRot,curpos),
+                        cloverLeafOtherLV,            //its logical volume
+                        name,               //its name
+                        casingLV,                     //its mother  volume
+                        false,                 //no boolean operation
+                        copyno++,                     //copy number
+                        checkOverlaps);        //overlaps checking
+    }
+  }
+
   return WorldPV; //must return G4VPhysicalVolume pointer to the world
 }
