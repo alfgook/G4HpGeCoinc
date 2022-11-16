@@ -51,7 +51,6 @@ void EventAction::EndOfEventAction(const G4Event* evt)
 
   if(hitsCollectionID==-1) {
     hitsCollectionID = G4SDManager::GetSDMpointer()->GetCollectionID("HPGeHC");
-    //fSDM->ListTree();
   }
 
   HPGeHitsCollection* hitsCollection = 
@@ -103,5 +102,6 @@ void EventAction::EndOfEventAction(const G4Event* evt)
       }
     }
   }
+
 }
 

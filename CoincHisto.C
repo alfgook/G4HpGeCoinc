@@ -5,6 +5,7 @@
 #include "TH2D.h"
 #include <iostream>
 #include <TFile.h>
+#include <algorithm>
 
 void CoincHisto(const char *filename, Double_t coincTime = 100, const Double_t Emax_keV = 2000)
 {
@@ -28,7 +29,7 @@ void CoincHisto(const char *filename, Double_t coincTime = 100, const Double_t E
 
 	TRandom3 rnd;
 
-	TH2D *hE1vsE2 = new TH2D("hE1vsE2","hE1vsE2;E1 (keV);E2 (keV)",500,0,Emax_keV,500,0,Emax_keV);
+	TH2D *hE1vsE2 = new TH2D("hE1vsE2","hE1vsE2;E1 (keV);E2 (keV)",1000,0,Emax_keV,1000,0,Emax_keV);
 	TH2D *hE1vsE2_res = new TH2D("hE1vsE2_res","hE1vsE2 (with resolution effect);E1 (keV);E2 (keV)",500,0,Emax_keV,500,0,Emax_keV);
 	TH2D *hEsumvsE2 = new TH2D("hEsumvsE2","hEsumvsE2;E1 (keV);E2 (keV)",500,0,Emax_keV,500,0,Emax_keV);
 
@@ -64,7 +65,9 @@ void CoincHisto(const char *filename, Double_t coincTime = 100, const Double_t E
 				if((*detectorNbr)[hit2]==7) continue; // hit is in the outer segment only
 				Double_t deltaT = fabs((*Times)[hit2] - (*Times)[hit1]);
 				if(deltaT<=coincTime) {
-					hE1vsE2->Fill((*EnergyDeps)[hit1],(*EnergyDeps)[hit2]);
+					Double_t E1 = std::max((*EnergyDeps)[hit1],(*EnergyDeps)[hit2]);
+					Double_t E2 = std::min((*EnergyDeps)[hit1],(*EnergyDeps)[hit2]);
+					hE1vsE2->Fill(E1,E2);
 				}
 
 				deltaT = rnd.Gaus((*Times)[hit2] - (*Times)[hit1],sigmaT);
@@ -112,7 +115,7 @@ void CoincHisto(const char *filename, Double_t coincTime = 100, const Double_t E
 
 	hE1vsE2->Draw("colz");
 
-	TFile *fOut = new TFile("Co60_CoicHisto.root","recreate");
+	TFile *fOut = new TFile("La140_CoicHisto.root","recreate");
 	hE1vsE2->Write();
 	hE1vsE2_res->Write();
 	hEsumvsE2->Write();

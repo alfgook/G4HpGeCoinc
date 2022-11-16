@@ -54,11 +54,10 @@
 #include "G4PVReplica.hh"
 #include <string>
 #include "G4GenericMessenger.hh"
-#include "PlanarParameterization.hh"
 #include "G4PVParameterised.hh"
 #include "G4Polycone.hh"
 
-//inlcudes for the sensitive detector
+//includes for the sensitive detector
 #include "HPGeSD.hh"
 #include "G4SDManager.hh"
 #include "G4LogicalVolumeStore.hh"
@@ -90,8 +89,9 @@ DetectorConstruction::DetectorConstruction()
   cavityDepth = cloverLength*0.9;
   nVerticalSegments = 8;
 
-  HPGeDetector = nullptr;
-  fGe = nullptr;
+  //HPGeDetector = nullptr;
+  //HPGeDetector = new HPGeSD("HPGeSD","HPGeHC");
+  fGe = new G4Material("HPGe",32.,72.640*g/mole,5.323*g/cm3,kStateSolid);
 
   fMessenger = new G4GenericMessenger(this,"/DetectorConstruction/", "control the detector construction");
   fMessenger->DeclareProperty("detectorType", DetectorType, "type of detector (1 = dual detector, 2 = segmented detector, 3 = planar segmented)");
@@ -135,27 +135,34 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 void DetectorConstruction::ConstructSDandField()
 {
 
-  if(HPGeDetector == nullptr) HPGeDetector = new HPGeSD("HPGeSD","HPGeHC");
+  static G4ThreadLocal HPGeSD* HPGeDetector = nullptr;
+  if(!HPGeDetector) HPGeDetector = new HPGeSD("HPGeSD","HPGeHC");
+  G4SDManager::GetSDMpointer()->AddNewDetector(HPGeDetector);
 
-  if(DetectorType==2) {
-    G4LogicalVolumeStore::GetInstance()->GetVolume("SmallSegmentLV")->SetSensitiveDetector(HPGeDetector);
-    G4LogicalVolumeStore::GetInstance()->GetVolume("BigSegmentLV")->SetSensitiveDetector(HPGeDetector);
-    G4SDManager::GetSDMpointer()->AddNewDetector(HPGeDetector);
-  } else if(DetectorType==1) {
+  G4cout << "===================DetectorConstruction::ConstructSDandField()============" << G4endl;
+  G4cout << "DetectorType = " << DetectorType << G4endl;
+  G4cout << "==========================================================================" << G4endl;
+
+  if(DetectorType==1) {
     G4LogicalVolume *logicVolume = G4LogicalVolumeStore::GetInstance()->GetVolume("DetectorLV");
-    logicVolume->SetSensitiveDetector(HPGeDetector);
-    G4SDManager::GetSDMpointer()->AddNewDetector(HPGeDetector);
-  } else if(DetectorType==3) {
-    G4LogicalVolume *logicVolume = G4LogicalVolumeStore::GetInstance()->GetVolume("SegmentLV");
-    logicVolume->SetSensitiveDetector(HPGeDetector);
-    G4SDManager::GetSDMpointer()->AddNewDetector(HPGeDetector);
+    //logicVolume->SetSensitiveDetector(HPGeDetector);
+    SetSensitiveDetector("DetectorLV",HPGeDetector);
+  } else if(DetectorType==2) {
+    //G4LogicalVolumeStore::GetInstance()->GetVolume("SmallSegmentLV")->SetSensitiveDetector(HPGeDetector);
+    //G4LogicalVolumeStore::GetInstance()->GetVolume("BigSegmentLV")->SetSensitiveDetector(HPGeDetector);
+    SetSensitiveDetector("SmallSegmentLV",HPGeDetector);
+    SetSensitiveDetector("BigSegmentLV",HPGeDetector);
+  }  else if(DetectorType==3) {
+    //G4LogicalVolume *logicVolume = G4LogicalVolumeStore::GetInstance()->GetVolume("SegmentLV");
+    //logicVolume->SetSensitiveDetector(HPGeDetector);
+    SetSensitiveDetector("SegmentLV",HPGeDetector);
+  } else if(DetectorType==4 || DetectorType==5) {
+    //G4LogicalVolumeStore::GetInstance()->GetVolume("cloverLeafBottomLV")->SetSensitiveDetector(HPGeDetector);
+    //G4LogicalVolumeStore::GetInstance()->GetVolume("cloverLeafOtherLV")->SetSensitiveDetector(HPGeDetector);
+    SetSensitiveDetector("cloverLeafBottomLV",HPGeDetector);
+    SetSensitiveDetector("cloverLeafOtherLV",HPGeDetector);
   }
 
-  /*G4cout << "---DetectorConstruction::ConstructSDandField()" << G4endl;
-  G4PhysicalVolumeStore *PVstore = G4PhysicalVolumeStore::GetInstance();
-  for (auto i=PVstore->begin(); i!=PVstore->end(); i++) {
-    G4cout << (*i)->GetName() << " : " << (*i)->GetCopyNo() << G4endl;
-  }*/
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -180,9 +187,6 @@ G4VPhysicalVolume* DetectorConstruction::SegmentedDetector()
   G4Material* fAlu = nist->FindOrBuildMaterial("G4_Al"); //Build vacuum material using the nist manager
   G4Material* fPlexiGlass = nist->FindOrBuildMaterial("G4_PLEXIGLASS");
   G4Material* fCobalt = nist->FindOrBuildMaterial("G4_Co");
-
-  // Ge-crystal material
-  if(fGe==nullptr) fGe = new G4Material("HPGe",32.,72.640*g/mole,5.323*g/cm3,kStateSolid);
 
   //============= GEOMETRY DESCRIPTION =================
 
@@ -383,8 +387,6 @@ G4VPhysicalVolume* DetectorConstruction::DualDetector()
   G4Material* air = nist->FindOrBuildMaterial("G4_AIR"); //Build vacuum material using the nist manager
   G4Material* fAlu = nist->FindOrBuildMaterial("G4_Al"); //Build vacuum material using the nist manager
 
-  // Ge-crystal material
-  if(fGe==nullptr) fGe = new G4Material("HPGe",32.,72.640*g/mole,5.323*g/cm3,kStateSolid);
 
   //============= GEOMETRY DESCRIPTION =================
 
@@ -470,7 +472,6 @@ G4VPhysicalVolume* DetectorConstruction::DualDetector()
   DetectorLV->SetVisAttributes(GeVisAtt);
   //====================================================
 
-  //SetupDetectors();
   return WorldPV; //must return G4VPhysicalVolume pointer to the world
 }
 
@@ -484,8 +485,6 @@ G4VPhysicalVolume* DetectorConstruction::PlanarSegmented()
   G4Material* air = nist->FindOrBuildMaterial("G4_AIR"); //Build vacuum material using the nist manager
   G4Material* fAlu = nist->FindOrBuildMaterial("G4_Al"); //Build vacuum material using the nist manager
 
-  // Ge-crystal material
-  if(fGe==nullptr) fGe = new G4Material("HPGe",32.,72.640*g/mole,5.323*g/cm3,kStateSolid);
 
   //============= GEOMETRY DESCRIPTION =================
 
@@ -599,8 +598,6 @@ G4VPhysicalVolume* DetectorConstruction::SegmentedClover()
   G4cout << "****************" << G4endl;
   G4cout << "nVerticalSegments = " << nVerticalSegments << G4endl;
   G4cout << "****************" << G4endl;
-  // Ge-crystal material
-  if(fGe==nullptr) fGe = new G4Material("HPGe",32.,72.640*g/mole,5.323*g/cm3,kStateSolid);
 
   //============= GEOMETRY DESCRIPTION =================
 
@@ -749,8 +746,6 @@ G4VPhysicalVolume* DetectorConstruction::SegmentedClover2()
   G4cout << "****************" << G4endl;
   G4cout << "nVerticalSegments = " << nVerticalSegments << G4endl;
   G4cout << "****************" << G4endl;
-  // Ge-crystal material
-  if(fGe==nullptr) fGe = new G4Material("HPGe",32.,72.640*g/mole,5.323*g/cm3,kStateSolid);
 
   //============= GEOMETRY DESCRIPTION =================
 
@@ -822,7 +817,7 @@ G4VPhysicalVolume* DetectorConstruction::SegmentedClover2()
                                         rInner1,
                                         rOuter1);
 
-  G4LogicalVolume *casingLV = new G4LogicalVolume(casingS, fAlu, "cloverLeafBottomLV");
+  G4LogicalVolume *casingLV = new G4LogicalVolume(casingS, fAlu, "casingLV");
 
   G4VPhysicalVolume* casingPV =
     new G4PVPlacement(0,                     //no rotation

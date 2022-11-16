@@ -36,7 +36,7 @@ void TrackingAction::PreUserTrackingAction(const G4Track* aTrack)
 		return;
 	}*/
 
-	if(aTrack->GetDefinition()==G4Gamma::Definition()) { // if the track is a gamma-ray
+	/*if(aTrack->GetDefinition()==G4Gamma::Definition()) { // if the track is a gamma-ray
 		// need this else if structure because aTrack->GetCreatorProcess()
 		// returns nullptr if the gamma comes from the primary generator
 		if(aTrack->GetParentID()==0) {
@@ -44,7 +44,7 @@ void TrackingAction::PreUserTrackingAction(const G4Track* aTrack)
 		} else if (aTrack->GetCreatorProcess()->GetProcessType()==fDecay) {
 			fEventAction->RegisterPrimaryGamma(aTrack->GetGlobalTime(),aTrack->GetVertexKineticEnergy());
 		} 
-	}
+	}*/
 }
 
 void TrackingAction::PostUserTrackingAction(const G4Track* aTrack)

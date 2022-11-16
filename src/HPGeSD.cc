@@ -14,7 +14,7 @@
 
 HPGeSD::HPGeSD(const G4String& name,  const G4String& HCname) 
  : G4VSensitiveDetector(name),
-   fHitsCollection(NULL)
+   fHitsCollection(nullptr)
 {
   collectionName.insert(HCname);
 }
@@ -29,8 +29,6 @@ HPGeSD::~HPGeSD()
 void HPGeSD::Initialize(G4HCofThisEvent* hce)
 {
   // Create hits collection
-
-	//G4cout << "HPGeSD::Initialize()" << G4endl;
 
   fHitsCollection = new HPGeHitsCollection(SensitiveDetectorName, collectionName[0]); 
 
