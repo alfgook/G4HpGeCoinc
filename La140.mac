@@ -1,0 +1,24 @@
+/DetectorConstruction/detectorType 5
+# setup of detector geometry parameters for the planar detector
+# this is approximately the one suggested from Mirion
+/DetectorConstruction/cloverRadius 47 mm
+/DetectorConstruction/cloverLength 80 mm
+/DetectorConstruction/cavityRadius 12.5 mm
+/DetectorConstruction/cavityDepth 65 mm 
+/DetectorConstruction/nVerticalSegments 4
+/DetectorConstruction/Rebuild
+
+/run/initialize
+
+# La-140 is the default radioactive ion source
+/PrimaryGeneratorAction/ionZ 57
+/PrimaryGeneratorAction/ionA 140
+#/process/had/rdm/thresholdForVeryLongDecayTime 72 h # ignore decays at rest after 72 h
+
+#/process/had/deex/correlatedGamma true # turn on the angular correlation
+#/process/had/deex/maxTwoJ 10 # Set maximum value of J_i for which to consider angular correlations
+
+/analysis/setFileName La140_small.root
+/run/printProgress 1000000
+/run/beamOn 100000000 # run a number of initial decays
+#/run/beamOn 100000
