@@ -25,6 +25,8 @@
 #include "G4IonConstructor.hh"
 #include "G4ShortLivedConstructor.hh"
 
+#include "G4HadronPhysicsQGSP_BERT_HP.hh"
+
 // For units of measurements
 #include "G4LossTableManager.hh"
 #include "G4UnitsTable.hh"
@@ -57,6 +59,8 @@ PhysicsList::PhysicsList(): G4VModularPhysicsList()
   emPhysicsList = new G4EmStandardPhysics_option4();
    //   emPhysicsList = new G4EmLivermorePhysics(0);
    //   emPhysicsList = new G4EmPenelopePhysics(0);
+
+  RegisterPhysics( new G4HadronPhysicsQGSP_BERT_HP());
 }
 
 

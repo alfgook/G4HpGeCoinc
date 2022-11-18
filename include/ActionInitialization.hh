@@ -15,11 +15,13 @@ class ActionInitialization : public G4VUserActionInitialization
 {
   public:
     ActionInitialization();
+    ActionInitialization(int);
     virtual ~ActionInitialization();
     virtual void BuildForMaster() const;
     virtual void Build() const;
 
-
+  private:
+    int fCry;
 };
 
 #endif

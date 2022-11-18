@@ -30,6 +30,9 @@
 
 #include "ActionInitialization.hh"
 #include "PrimaryGeneratorAction.hh"
+#ifdef BUILD_WITH_CRY
+   #include "PrimaryGeneratorActionCRY.hh"
+#endif
 #include "RunAction.hh"
 #include "EventAction.hh"
 #include "TrackingAction.hh"
@@ -41,7 +44,17 @@
 
 ActionInitialization::ActionInitialization()
 : G4VUserActionInitialization()
-{}
+{
+   fCry = 0;
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+ActionInitialization::ActionInitialization(int cry)
+: G4VUserActionInitialization()
+{
+   fCry = cry;
+}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
@@ -60,15 +73,24 @@ void ActionInitialization::BuildForMaster() const
 
 void ActionInitialization::Build() const
 {   
-    RunAction *aRunAction = new RunAction();
-    EventAction* aEventAction = new EventAction(aRunAction);
-    TrackingAction* aTrackingAction = new TrackingAction(aEventAction);
+   RunAction *aRunAction = new RunAction();
+   EventAction* aEventAction = new EventAction(aRunAction);
+   TrackingAction* aTrackingAction = new TrackingAction(aEventAction);
 
-    SetUserAction(aRunAction);
-    SetUserAction(new PrimaryGeneratorAction());
-    SetUserAction(aEventAction);
-    SetUserAction(aTrackingAction);
-    //SetUserAction(new SteppingAction(aEventAction) );
+   SetUserAction(aRunAction);
+   #ifdef BUILD_WITH_CRY
+      if(fCry) {
+         SetUserAction(new PrimaryGeneratorActionCRY());
+      } else {
+         SetUserAction(new PrimaryGeneratorAction());
+      }
+   #else
+      SetUserAction(new PrimaryGeneratorAction());
+   #endif
+
+   SetUserAction(aEventAction);
+   SetUserAction(aTrackingAction);
+   //SetUserAction(new SteppingAction(aEventAction) );
 
 }  
 

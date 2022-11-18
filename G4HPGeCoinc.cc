@@ -41,12 +41,25 @@ int main(int argc,char** argv)
     G4int nThreads = 1;
   #endif
 
+  G4int cryOpt = 0;
+  
   if( argc>1 ) {
     for ( G4int i=1; i<argc; i=i+2 ) {
       if( G4String(argv[i]) == "-m" ) {
         macro = argv[i+1];
       }
       if( G4String(argv[i]) == "-t" ) nThreads = G4UIcommand::ConvertToInt(argv[i+1]);
+      if( G4String(argv[i]) == "-cry" ) {
+        #ifdef BUILD_WITH_CRY
+          cryOpt = atoi(argv[i+1]);
+        #else
+          G4cout << "*********************************************\n"
+                 << "* CRY library not availible for this build. *\n"
+                 << "* -cry option will be ignored!              *\n"
+                 << "*********************************************"
+                 << G4endl;
+        #endif
+      }
     }
   }
 
@@ -97,7 +110,7 @@ int main(int argc,char** argv)
 */
 
   // initialization of user action classes
-  runManager->SetUserInitialization(new ActionInitialization());
+  runManager->SetUserInitialization(new ActionInitialization(cryOpt));
 
   ///////////////////////////
   // Initialize G4 kernel

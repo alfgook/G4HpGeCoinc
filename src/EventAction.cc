@@ -89,7 +89,7 @@ void EventAction::EndOfEventAction(const G4Event* evt)
       }
     }
   }
-  if(hitsCollection->entries()) fRunAction->AddNtupleRow();
+  /*if(hitsCollection->entries())*/ fRunAction->AddNtupleRow();
 
   //------ analyse the source gamma-rays -----------
 

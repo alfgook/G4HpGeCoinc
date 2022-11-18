@@ -97,6 +97,9 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
     fDecayTable->DumpInfo();
   }
 
+  /*G4double LifeTime = fIon->GetPDGLifeTime();
+  if(LifeTime>0.) time = -LifeTime*log(G4UniformRand());*/
+
   G4DecayProducts* products = DoDecay(*fIon);
   G4int numberOfSecondaries = 0;
   if(products) {

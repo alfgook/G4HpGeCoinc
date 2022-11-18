@@ -22,7 +22,20 @@ endif()
 include(${Geant4_USE_FILE})
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
-
+#----------------------------------------------------------------------------
+# Locate the CRY library
+find_library(LCRY libCRY.a
+             PATHS ${CRY_PATH}/lib
+             DOC "cry library"
+             NO_DEFAULT_PATH
+            )
+if(NOT LCRY)
+  message(WARNING "cry library not found... skipping this in the build!")
+else()
+  add_compile_definitions(CRY_DATA_DIR="${CRY_PATH}/data")
+  add_compile_definitions(BUILD_WITH_CRY)
+  include_directories(${CRY_PATH}/src)
+endif()
 #----------------------------------------------------------------------------
 # Locate sources and headers for this project
 # NB: headers are included so they will show up in IDEs
@@ -30,11 +43,25 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cc)
 file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 
+if(NOT LCRY)
+  list(REMOVE_ITEM sources ${PROJECT_SOURCE_DIR}/src/PrimaryGeneratorActionCRY.cc)
+  list(REMOVE_ITEM sources ${PROJECT_SOURCE_DIR}/src/PrimaryGeneratorMessenger.cc)
+  list(REMOVE_ITEM sources ${PROJECT_SOURCE_DIR}/src/RNGWrapper.cc)
+  list(REMOVE_ITEM headers ${PROJECT_SOURCE_DIR}/include/PrimaryGeneratorActionCRY.hh)
+  list(REMOVE_ITEM headers ${PROJECT_SOURCE_DIR}/include/PrimaryGeneratorMessenger.hh)
+  list(REMOVE_ITEM headers ${PROJECT_SOURCE_DIR}/include/RNGWrapper.hh)
+endif()
 #----------------------------------------------------------------------------
 # Add the executable, and link it to the Geant4 libraries
 #
 add_executable(G4HPGeCoinc G4HPGeCoinc.cc ${sources} ${headers})
 target_link_libraries(G4HPGeCoinc ${Geant4_LIBRARIES})
+
+#----------------------------------------------------------------------------
+# link the CRY library
+if(LCRY)
+  target_link_libraries(G4HPGeCoinc ${LCRY})
+endif()
 
 #----------------------------------------------------------------------------
 # Set the c++ std
@@ -51,6 +78,7 @@ set(EXAMPLEED_SCRIPTS
   run.png
   vis.mac
   testRun.mac
+  default.cry.setup
   )
 
 foreach(_script ${EXAMPLEED_SCRIPTS})

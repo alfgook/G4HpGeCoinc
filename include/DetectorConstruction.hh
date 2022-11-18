@@ -53,8 +53,8 @@ class DetectorConstruction : public G4VUserDetectorConstruction
     std::vector<G4VPhysicalVolume*> SegmentsPV;
     G4LogicalVolume* WorldLV;
 
-    //static G4ThreadLocal HPGeSD* HPGeDetector;
     G4Material *fGe;
+
 };
 
 
