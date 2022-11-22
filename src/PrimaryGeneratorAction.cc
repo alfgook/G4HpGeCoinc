@@ -41,6 +41,7 @@ fParticleGun(0)
   fMessenger->DeclareProperty("ionA", fA, "A of primary radioactive ion");
   fMessenger->DeclarePropertyWithUnit("ionEx", "keV", fEx, "excitation energy (keV) of primary radioactive ion");
   fMessenger->DeclareProperty("verbose", fVerbose, "verbose level");
+  fMessenger->DeclareProperty("followdecaychain", fFollowDecayChain, "wether (1) or not (0) the daugther of the primary ion should be decayed");
 
   // default ion is La-140
   fZ = 57;
@@ -56,6 +57,7 @@ fParticleGun(0)
   fPosDist->SetRadius(3.0*mm);
   fPosDist->SetHalfZ(1.5*mm);
 
+  fFollowDecayChain = 1;
 }
 
 
@@ -107,6 +109,9 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
     for (G4int index = 0; index < numberOfSecondaries; index++) {
       G4DynamicParticle *secondary = (*products)[index];
       G4ParticleDefinition* particleDef = (G4ParticleDefinition*) secondary->GetParticleDefinition();
+      if(particleDef->GetPDGCharge()>2 && fFollowDecayChain==0) {
+        continue; // do not add the daughter nuclide to the source
+      }
       fParticleGun->SetParticleDefinition(particleDef); 
       fParticleGun->SetParticleEnergy(secondary->GetKineticEnergy());
       fParticleGun->SetParticleMomentumDirection(secondary->GetMomentumDirection());

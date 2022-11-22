@@ -44,6 +44,7 @@ class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
     G4int fA;
     G4double fEx;
     G4int fVerbose;
+    G4int fFollowDecayChain;
 
     G4DecayProducts* DoDecay(const G4ParticleDefinition& theParticleDef);
 };

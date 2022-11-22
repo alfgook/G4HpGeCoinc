@@ -25,6 +25,7 @@ private:
 
   G4VPhysicsConstructor*               emPhysicsList;
   G4VPhysicsConstructor*               fParticleList;
+  G4VPhysicsConstructor*               hadronPhysicsList;
 
 };
 #endif

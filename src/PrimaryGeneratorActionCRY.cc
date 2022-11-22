@@ -90,8 +90,8 @@ void PrimaryGeneratorActionCRY::GeneratePrimaries(G4Event* event)
 {
   if (InputState != 0) {
     if(CRYFromFile("default.cry.setup")) {
-      G4String* str = new G4String("CRY library was not successfully initialized");
-      G4Exception("PrimaryGeneratorActionCRY", "4",RunMustBeAborted, *str);
+      G4String str("CRY library was not successfully initialized");
+      G4Exception("PrimaryGeneratorActionCRY", "4",RunMustBeAborted, str);
 
       return;
     }
@@ -130,6 +130,8 @@ void PrimaryGeneratorActionCRY::GeneratePrimaries(G4Event* event)
         particleGun->GeneratePrimaryVertex(event);
         ++nGenerated;
       }
+
+      delete (*particle);
       
       //....debug output 
       /*G4String pName = CRYUtils::partName((*particle)->id()); 
@@ -146,8 +148,7 @@ void PrimaryGeneratorActionCRY::GeneratePrimaries(G4Event* event)
     }
   }
   
-  //if(generator->timeSimulated()>1.e5) { //reinit the CRY generator to not loose time correlations
-  if(generator->timeSimulated()>0.1) { //reinit the CRY generator to not loose time correlations
+  if(generator->timeSimulated()>1.e5) { //reinit the CRY generator to not loose time correlations
     global_simulation_time += generator->timeSimulated();
     std::string dummy("");
     UpdateCRY(&dummy);
@@ -173,6 +174,8 @@ void PrimaryGeneratorActionCRY::UpdateCRY(std::string* MessInput)
   RNGWrapper<CLHEP::HepRandomEngine>::set(CLHEP::HepRandom::getTheEngine(),&CLHEP::HepRandomEngine::flat);
   setup->setRandomFunction(RNGWrapper<CLHEP::HepRandomEngine>::rng);
   InputState=0;
+
+  delete setup;
 }
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 G4int PrimaryGeneratorActionCRY::CRYFromFile(G4String newValue)
@@ -205,6 +208,8 @@ G4int PrimaryGeneratorActionCRY::CRYFromFile(G4String newValue)
   RNGWrapper<CLHEP::HepRandomEngine>::set(CLHEP::HepRandom::getTheEngine(),&CLHEP::HepRandomEngine::flat);
   setup->setRandomFunction(RNGWrapper<CLHEP::HepRandomEngine>::rng);
   InputState=0;
+
+  delete setup;
 
   return InputState;
 }

@@ -28,6 +28,8 @@ RunAction::RunAction(G4bool master): isMaster(master)
 
   analysisManager->CreateNtuple("G4HPGeCoinc", "G4HPGeCoinc");
   analysisManager->CreateNtupleDColumn("GlobalEventTime");
+  analysisManager->CreateNtupleIColumn("EventNumber");
+  analysisManager->CreateNtupleIColumn("Multiplicity");
   analysisManager->CreateNtupleIColumn("detectorNbr",vDetectorNbrs);
   analysisManager->CreateNtupleDColumn("EnergyDeps",vEnergyDeps);
   analysisManager->CreateNtupleDColumn("Times",vTimes);

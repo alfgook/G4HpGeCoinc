@@ -58,7 +58,7 @@ G4bool HPGeSD::ProcessHits(G4Step* aStep, G4TouchableHistory*)
 	G4double Edep = aStep->GetTotalEnergyDeposit();
 	if(Edep==0.) return true;	
 
-	const G4double detectorResolvingTime = 10.e3; // 10 micro sec
+	const G4double detectorResolvingTime = 1.E+04; // 10 micro sec
 
 	HPGeHit* theHit = nullptr;
 	for(size_t i=0;i<fHitsCollection->entries();i++) {

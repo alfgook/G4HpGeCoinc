@@ -144,7 +144,7 @@ void DetectorConstruction::ConstructSDandField()
   G4cout << "==========================================================================" << G4endl;
 
   if(DetectorType==1) {
-    G4LogicalVolume *logicVolume = G4LogicalVolumeStore::GetInstance()->GetVolume("DetectorLV");
+    //G4LogicalVolume *logicVolume = G4LogicalVolumeStore::GetInstance()->GetVolume("DetectorLV");
     //logicVolume->SetSensitiveDetector(HPGeDetector);
     SetSensitiveDetector("DetectorLV",HPGeDetector);
   } else if(DetectorType==2) {
@@ -181,7 +181,7 @@ G4VPhysicalVolume* DetectorConstruction::SegmentedDetector()
   DetectorType = 2;
   //============= MATERIAL DEFINITION =================
   G4NistManager* nist = G4NistManager::Instance();  // Get nist material manager
-  G4Material* galactic = nist->FindOrBuildMaterial("G4_Galactic"); //Build vacuum material using the nist manager
+  //G4Material* galactic = nist->FindOrBuildMaterial("G4_Galactic"); //Build vacuum material using the nist manager
   //G4Material* BGO = nist->FindOrBuildMaterial("G4_BGO"); //Build vacuum material using the nist manager
   G4Material* air = nist->FindOrBuildMaterial("G4_AIR"); //Build vacuum material using the nist manager
   G4Material* fAlu = nist->FindOrBuildMaterial("G4_Al"); //Build vacuum material using the nist manager
@@ -382,10 +382,10 @@ G4VPhysicalVolume* DetectorConstruction::DualDetector()
   DetectorType = 1;
   //============= MATERIAL DEFINITION =================
   G4NistManager* nist = G4NistManager::Instance();  // Get nist material manager
-  G4Material* galactic = nist->FindOrBuildMaterial("G4_Galactic"); //Build vacuum material using the nist manager
+  //G4Material* galactic = nist->FindOrBuildMaterial("G4_Galactic"); //Build vacuum material using the nist manager
   //G4Material* BGO = nist->FindOrBuildMaterial("G4_BGO"); //Build vacuum material using the nist manager
   G4Material* air = nist->FindOrBuildMaterial("G4_AIR"); //Build vacuum material using the nist manager
-  G4Material* fAlu = nist->FindOrBuildMaterial("G4_Al"); //Build vacuum material using the nist manager
+  //G4Material* fAlu = nist->FindOrBuildMaterial("G4_Al"); //Build vacuum material using the nist manager
 
 
   //============= GEOMETRY DESCRIPTION =================
@@ -428,13 +428,14 @@ G4VPhysicalVolume* DetectorConstruction::DualDetector()
   //G4double detector_radius = 2.54*cm; // 1 inch
   //G4double detector_length = 2.54*cm; // 1 inch 
 
-  //G4double detector_radius = 45.4864*mm; // Mirion BE6530 
-  //G4double detector_length = 30.0000*mm; // Mirion BE6530
+  G4double detector_radius = 45.4864*mm; // Mirion BE6530 
+  G4double detector_length = 30.0000*mm; // Mirion BE6530
   //G4double detector_sample_distance = 7.588*cm; // 10 % solid angle coverage
+  G4double detector_sample_distance = 25.*mm;
 
-  G4double detector_radius = 25.0000*mm; // test comparson with Olena's serpent results
-  G4double detector_length = 50.0000*mm; // test comparson with Olena's serpent results
-  G4double detector_sample_distance = 5.00*cm + detector_length*0.5; // test comparson with Olena's serpent results
+  //G4double detector_radius = 25.0000*mm; // test comparson with Olena's serpent results
+  //G4double detector_length = 50.0000*mm; // test comparson with Olena's serpent results
+  //G4double detector_sample_distance = 5.00*cm + detector_length*0.5; // test comparson with Olena's serpent results
 
   // crystal
 
@@ -446,10 +447,11 @@ G4VPhysicalVolume* DetectorConstruction::DualDetector()
                         fGe,           //its material
                         "DetectorLV");            //its name
 
+  G4RotationMatrix rotDetector;
+  rotDetector.rotateX(90*deg);
 
   /*G4VPhysicalVolume* DetectorPV =*/
-    new G4PVPlacement(0,                     //no rotation
-                      G4ThreeVector(0,0,detector_sample_distance),  //at (0,0,0)
+    new G4PVPlacement(G4Transform3D(rotDetector,G4ThreeVector(0,detector_sample_distance,0)),
                       DetectorLV,            //its logical volume
                       "DetectorPV1",          //its name
                       WorldLV,               //its mother volume
@@ -459,14 +461,14 @@ G4VPhysicalVolume* DetectorConstruction::DualDetector()
 
 
   /*G4VPhysicalVolume* DetectorPV =*/
-    new G4PVPlacement(0,                     //no rotation
-                      G4ThreeVector(0,0,-detector_sample_distance),  //at (0,0,0)
+    new G4PVPlacement(G4Transform3D(rotDetector,G4ThreeVector(0,-detector_sample_distance,0)),
                       DetectorLV,            //its logical volume
                       "DetectorPV2",          //its name
                       WorldLV,               //its mother volume
                       false,                 //no boolean operation
                       1,                     //copy number
                       checkOverlaps);        //overlaps checking
+  
 
   G4VisAttributes *GeVisAtt = new G4VisAttributes(G4Color::Red());
   DetectorLV->SetVisAttributes(GeVisAtt);
@@ -480,10 +482,10 @@ G4VPhysicalVolume* DetectorConstruction::PlanarSegmented()
   DetectorType = 3;
   //============= MATERIAL DEFINITION =================
   G4NistManager* nist = G4NistManager::Instance();  // Get nist material manager
-  G4Material* galactic = nist->FindOrBuildMaterial("G4_Galactic"); //Build vacuum material using the nist manager
+  //G4Material* galactic = nist->FindOrBuildMaterial("G4_Galactic"); //Build vacuum material using the nist manager
   //G4Material* BGO = nist->FindOrBuildMaterial("G4_BGO"); //Build vacuum material using the nist manager
   G4Material* air = nist->FindOrBuildMaterial("G4_AIR"); //Build vacuum material using the nist manager
-  G4Material* fAlu = nist->FindOrBuildMaterial("G4_Al"); //Build vacuum material using the nist manager
+  //G4Material* fAlu = nist->FindOrBuildMaterial("G4_Al"); //Build vacuum material using the nist manager
 
 
   //============= GEOMETRY DESCRIPTION =================
@@ -590,10 +592,10 @@ G4VPhysicalVolume* DetectorConstruction::SegmentedClover()
   DetectorType = 4;
   //============= MATERIAL DEFINITION =================
   G4NistManager* nist = G4NistManager::Instance();  // Get nist material manager
-  G4Material* galactic = nist->FindOrBuildMaterial("G4_Galactic"); //Build vacuum material using the nist manager
+  //G4Material* galactic = nist->FindOrBuildMaterial("G4_Galactic"); //Build vacuum material using the nist manager
   //G4Material* BGO = nist->FindOrBuildMaterial("G4_BGO"); //Build vacuum material using the nist manager
   G4Material* air = nist->FindOrBuildMaterial("G4_AIR"); //Build vacuum material using the nist manager
-  G4Material* fAlu = nist->FindOrBuildMaterial("G4_Al"); //Build vacuum material using the nist manager
+  //G4Material* fAlu = nist->FindOrBuildMaterial("G4_Al"); //Build vacuum material using the nist manager
 
   G4cout << "****************" << G4endl;
   G4cout << "nVerticalSegments = " << nVerticalSegments << G4endl;
@@ -738,7 +740,7 @@ G4VPhysicalVolume* DetectorConstruction::SegmentedClover2()
   DetectorType = 5;
   //============= MATERIAL DEFINITION =================
   G4NistManager* nist = G4NistManager::Instance();  // Get nist material manager
-  G4Material* galactic = nist->FindOrBuildMaterial("G4_Galactic"); //Build vacuum material using the nist manager
+  //G4Material* galactic = nist->FindOrBuildMaterial("G4_Galactic"); //Build vacuum material using the nist manager
   //G4Material* BGO = nist->FindOrBuildMaterial("G4_BGO"); //Build vacuum material using the nist manager
   G4Material* air = nist->FindOrBuildMaterial("G4_AIR"); //Build vacuum material using the nist manager
   G4Material* fAlu = nist->FindOrBuildMaterial("G4_Al"); //Build vacuum material using the nist manager
@@ -783,8 +785,6 @@ G4VPhysicalVolume* DetectorConstruction::SegmentedClover2()
   WorldLV->SetVisAttributes(WorldVisAtt);
 
   //============== Aluminum casing around the detector ================
-
-
   G4double bottomThickness = cloverLength - cavityDepth;
   G4double curCloverLength = cloverLength/nVerticalSegments;
   if(bottomThickness>=curCloverLength) bottomThickness = curCloverLength;
@@ -799,15 +799,7 @@ G4VPhysicalVolume* DetectorConstruction::SegmentedClover2()
                         +cloverLength*0.5+minWallThickness};
   G4double rInner1[] = {0,0,0,innerRad,innerRad,innerRad};
   G4double rOuter1[] = {outerRad,outerRad,outerRad,outerRad,outerRad,outerRad};
-/*
-  G4Polycone *casingS = new G4Polycone("casingS",
-                                        0.,
-                                        360.*deg,
-                                        6,
-                                        zPlane1,
-                                        rInner1,
-                                        rOuter1);
-*/
+
   G4Polyhedra *casingS = new G4Polyhedra("casingS",
                                         0,
                                         360.*deg,
@@ -819,7 +811,7 @@ G4VPhysicalVolume* DetectorConstruction::SegmentedClover2()
 
   G4LogicalVolume *casingLV = new G4LogicalVolume(casingS, fAlu, "casingLV");
 
-  G4VPhysicalVolume* casingPV =
+  /*G4VPhysicalVolume* casingPV =*/
     new G4PVPlacement(0,                     //no rotation
                       G4ThreeVector(0,0,0),       //at (0,0,0)
                       casingLV,            //its logical volume

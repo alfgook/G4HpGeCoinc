@@ -8,6 +8,9 @@
 #include "G4VPhysicsConstructor.hh"
 
 #include "G4EmStandardPhysics_option4.hh"
+#include "G4EmPenelopePhysics.hh"
+#include "G4EmLivermorePhysics.hh"
+
 #include "G4ParticleTypes.hh"
 #include "G4Radioactivation.hh"
 #include "G4NuclearLevelData.hh"
@@ -26,6 +29,8 @@
 #include "G4ShortLivedConstructor.hh"
 
 #include "G4HadronPhysicsQGSP_BERT_HP.hh"
+
+#include "G4RegionStore.hh"
 
 // For units of measurements
 #include "G4LossTableManager.hh"
@@ -50,17 +55,18 @@ PhysicsList::PhysicsList(): G4VModularPhysicsList()
   deex->SetMaxLifeTime(G4NuclideTable::GetInstance()->GetThresholdOfHalfLife()
                 /std::log(2.));
 
-  defaultCutValue = 0.1* mm;
+  defaultCutValue = 1.0* mm;
 
   SetVerboseLevel(0);
 
   fParticleList = new G4DecayPhysics();
   // EM physics
-  emPhysicsList = new G4EmStandardPhysics_option4();
-   //   emPhysicsList = new G4EmLivermorePhysics(0);
-   //   emPhysicsList = new G4EmPenelopePhysics(0);
+  //emPhysicsList = new G4EmStandardPhysics_option4(1);
+  //emPhysicsList = new G4EmLivermorePhysics(1);
+  emPhysicsList = new G4EmPenelopePhysics(1);
 
-  RegisterPhysics( new G4HadronPhysicsQGSP_BERT_HP());
+  hadronPhysicsList = new G4HadronPhysicsQGSP_BERT_HP(1);
+  //RegisterPhysics(new G4HadronPhysicsQGSP_BERT_HP(1));
 }
 
 
@@ -73,30 +79,6 @@ PhysicsList::~PhysicsList()
 void PhysicsList::ConstructParticle()
 {
   /*
-  emPhysicsList->ConstructParticle();
-  fParticleList->ConstructParticle();
-  
-  // pseudo-particles
-  G4Geantino::GeantinoDefinition();
-  
-  // gamma
-  G4Gamma::GammaDefinition();
-
-  // leptons
-  G4Electron::ElectronDefinition();
-  G4Positron::PositronDefinition();
-
-  G4NeutrinoE::NeutrinoEDefinition();
-  G4AntiNeutrinoE::AntiNeutrinoEDefinition();
-  
-  // baryons
-  G4Proton::ProtonDefinition();
-  G4Neutron::NeutronDefinition();  
-
-  // ions
-  G4IonConstructor iConstructor;
-  iConstructor.ConstructParticle(); 
-  */
   G4BosonConstructor  pBosonConstructor;
   pBosonConstructor.ConstructParticle();
 
@@ -113,7 +95,11 @@ void PhysicsList::ConstructParticle()
   pIonConstructor.ConstructParticle();
 
   G4ShortLivedConstructor pShortLivedConstructor;
-  pShortLivedConstructor.ConstructParticle(); 
+  pShortLivedConstructor.ConstructParticle();
+  */
+  fParticleList->ConstructParticle();
+  emPhysicsList->ConstructParticle();
+  hadronPhysicsList->ConstructParticle();
 }
 
 void PhysicsList::ConstructProcess()
@@ -121,9 +107,10 @@ void PhysicsList::ConstructProcess()
   // transportation
   AddTransportation();
 
-  // em physics
+  //
 	emPhysicsList->ConstructProcess();
   fParticleList->ConstructProcess();
+  hadronPhysicsList->ConstructProcess();
 
   // decays
   G4Radioactivation* radioactiveDecay = new G4Radioactivation();
@@ -157,5 +144,15 @@ void PhysicsList::ConstructProcess()
 void PhysicsList::SetCuts()
 {
   G4VUserPhysicsList::SetCutsWithDefault();
+  G4VUserPhysicsList::SetCutValue(0.1*mm, "e-");
+  G4VUserPhysicsList::SetCutValue(0.1*mm, "e+");
+  G4VUserPhysicsList::SetCutValue(0.01*mm, "gamma");
+/*
+  G4String regName = "DetectorRegion";
+  G4Region *region = G4RegionStore::GetInstance()->GetRegion(regName);
+  G4ProductionCuts *cuts = new G4ProductionCuts;
+  cuts->SetProductionCut(0.01*mm); // same cuts for gamma, proton, e- and e+
+  region->SetProductionCuts(cuts);
+*/
   DumpCutValuesTable();
 }

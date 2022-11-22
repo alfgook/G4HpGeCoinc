@@ -2,7 +2,7 @@ This is a framework for simulation of coincidence spectrometry of (segmented) HP
 
 to build this project, make a build directory inside the main project directory (G4HPGecoinc), for example
 
-mkdir build
+	mkdir build
 
 run cmake in the build directory
 
@@ -21,7 +21,7 @@ To run the application in batch mode (for large simualtions)
 
 	./G4HPGecoinc -t 8 -m mymacro.mac
 
-where the option -m XXX specifies a macro file to set up the simulation.
+where the option -m mymacro.mac specifies a macro file (here mymacro.mac) to set up the simulation.
 
 There are a number of detector setups that can be chosen and modified through geant4 UI commands. See the file detectorSetup.mac for more information. In GUI mode, the application will look for the file detectorSetup.mac in the build directory to build the detector (this file is not copied into the build directory by default). If the file detectorSetup.mac is not found a default dual detector setup is built. When running in batch mode the file detectorSetup.mac is ignored, the detector setup commands should then be placed in the macro file following the -m option.
 
@@ -33,10 +33,14 @@ To run with CRY, the library needs to be build on your computer. Follow the inst
 
 	cmake -DCRY_PATH:PATH='/home/alf/projects/GammaCoinc/cry_v1.7' ..
 
+then
+
+	make
+
 where you replace '/home/alf/projects/GammaCoinc/cry_v1.7' with the path to the directory where you just built CRY.
 
 To run with CRY as primary event generator
 
 	./G4HPGecoinc -t 1 -cry 1
 
-The cry event generator will setup by reading from the file default.cry.setup, which is copied into the build directory by cmake. To control cry this file may be edited. There are also UI commands to modify the CRY setup, see https://nuclear.llnl.gov/simulation/doc_cry_v1.7/cry.pdf for details.
+The cry event generator will setup by reading from the file default.cry.setup, which is copied into the build directory by cmake. To control CRY this file may be edited. There are also UI commands to modify the CRY setup, see https://nuclear.llnl.gov/simulation/doc_cry_v1.7/cry.pdf for details.
