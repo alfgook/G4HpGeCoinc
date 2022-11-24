@@ -46,11 +46,11 @@ class DetectorConstruction : public G4VUserDetectorConstruction
     G4double cavityRadius;
     G4double cavityDepth;
     G4int nVerticalSegments;
+    G4double detectorDistance;
 
 
     G4Box *SegmentS;
 
-    std::vector<G4VPhysicalVolume*> SegmentsPV;
     G4LogicalVolume* WorldLV;
 
     G4Material *fGe;

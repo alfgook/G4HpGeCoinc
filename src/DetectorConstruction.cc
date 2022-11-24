@@ -81,6 +81,7 @@ DetectorConstruction::DetectorConstruction()
   sizeX = 80.*mm;
   sizeY = 80.*mm;
   sizeZ = 25.*mm;
+  detectorDistance = 50.*mm;
 
   // parameters of the segmented clover
   cloverRadius = 40.*mm;
@@ -100,6 +101,7 @@ DetectorConstruction::DetectorConstruction()
   fMessenger->DeclarePropertyWithUnit("SizeX", "mm", sizeX, "size of detector in x direction");
   fMessenger->DeclarePropertyWithUnit("SizeY", "mm", sizeY, "size of detector in y direction");
   fMessenger->DeclarePropertyWithUnit("SizeZ", "mm", sizeZ, "size of detector in z direction (depth)");
+  fMessenger->DeclarePropertyWithUnit("DetectorDistance", "mm", detectorDistance, "distance between the two detector planes");
 
   fMessenger->DeclareProperty("nVerticalSegments", nVerticalSegments, "number of vertical segments");
   fMessenger->DeclarePropertyWithUnit("cloverRadius", "mm", cloverRadius, "radius of circular part of clover");
@@ -529,14 +531,82 @@ G4VPhysicalVolume* DetectorConstruction::PlanarSegmented()
   G4cout << "nSegmentsX = " << nSegmentsX << G4endl;
   G4cout << "nSegmentsY = " << nSegmentsY << G4endl;
 
-  G4double z0 = 5*cm; //distance from center to each detector plane
-  
-  // crystal
+  // The full detector volume to be filled with segments (just a dummy volume with air to make it easier to rotate and place the segments)
+  G4double minWallThickness = 0.5*mm;
+  G4Box *casingS = new G4Box("SegmentS",sizeX*0.5+minWallThickness,sizeY*0.5+minWallThickness,sizeZ*0.5+minWallThickness);
+  G4LogicalVolume *casingLV1 = new G4LogicalVolume(casingS,air,"casingLV1");
+  G4LogicalVolume *casingLV2 = new G4LogicalVolume(casingS,air,"casingLV2");
 
-  // The full detector volume to be filled with segments
+  // crystal
   SegmentS = new G4Box("SegmentS",sizeX*0.5/nSegmentsX,sizeY*0.5/nSegmentsY,0.5*sizeZ);
   G4LogicalVolume *SegmentLV = new G4LogicalVolume(SegmentS,fGe,"SegmentLV");
 
+  G4double z0 = 0.5*detectorDistance + 0.5*sizeZ + minWallThickness; //distance from center to each detector plane
+  G4double SegmentSizeX = sizeX/nSegmentsX;
+  G4double SegmentSizeY = sizeY/nSegmentsY;
+  G4int copyno = 0;
+
+  // first plane of detector-segments at - z0
+  for(G4int col=0;col<nSegmentsX;col++) {
+    G4double x = SegmentSizeX*(col - G4double(nSegmentsX)*0.5 + 0.5);
+    for(G4int row=0;row<nSegmentsX;row++) {
+      G4double y = SegmentSizeY*(row - G4double(nSegmentsY)*0.5 + 0.5);
+
+      G4String name = "SegmentPV_" + std::to_string(copyno);
+      G4VPhysicalVolume *segmentPV = new G4PVPlacement(0,                     //no rotation
+                      G4ThreeVector(x,y,0),       //at (0,0,0)
+                      SegmentLV,            //its logical volume
+                      name,               //its name
+                      casingLV1,                     //its mother  volume
+                      false,                 //no boolean operation
+                      copyno,                     //copy number
+                      checkOverlaps);        //overlaps checking
+      ++copyno;
+    }
+  }
+
+  // second plane of detector-segments at + z0
+  for(G4int col=0;col<nSegmentsX;col++) {
+    G4double x = SegmentSizeX*(col - G4double(nSegmentsX)*0.5 + 0.5);
+    for(G4int row=0;row<nSegmentsX;row++) {
+      G4double y = SegmentSizeY*(row - G4double(nSegmentsY)*0.5 + 0.5);
+
+      G4String name = "SegmentPV_" + std::to_string(copyno);
+      G4VPhysicalVolume *segmentPV = new G4PVPlacement(0,                     //no rotation
+                      G4ThreeVector(x,y,0),       //at (0,0,0)
+                      SegmentLV,            //its logical volume
+                      name,               //its name
+                      casingLV2,                     //its mother  volume
+                      false,                 //no boolean operation
+                      copyno,                     //copy number
+                      checkOverlaps);        //overlaps checking
+      ++copyno;
+    }
+  }
+
+  G4RotationMatrix rotDetector;
+  rotDetector.rotateX(90*deg);
+
+  /*G4VPhysicalVolume *casingPV1 = */
+    new G4PVPlacement(G4Transform3D(rotDetector,G4ThreeVector(0,z0,0)),
+                      casingLV1,            //its logical volume
+                      "casingPV1",               //its name
+                      WorldLV,                     //its mother  volume
+                      false,                 //no boolean operation
+                      copyno,                     //copy number
+                      checkOverlaps);        //overlaps checking
+
+  /*G4VPhysicalVolume *casingPV2 = */
+    new G4PVPlacement(G4Transform3D(rotDetector,G4ThreeVector(0,-z0,0)),
+                      casingLV2,            //its logical volume
+                      "casingPV2",               //its name
+                      WorldLV,                     //its mother  volume
+                      false,                 //no boolean operation
+                      copyno,                     //copy number
+                      checkOverlaps);        //overlaps checking
+
+/*
+  G4double z0 = 0.5*detectorDistance + 0.5*sizeZ
   G4double SegmentSizeX = sizeX/nSegmentsX;
   G4double SegmentSizeY = sizeY/nSegmentsY;
   G4int copyno = 0;
@@ -580,7 +650,7 @@ G4VPhysicalVolume* DetectorConstruction::PlanarSegmented()
       ++copyno;
     }
   }
-
+*/
   //====================================================
 
   return WorldPV; //must return G4VPhysicalVolume pointer to the world
@@ -811,9 +881,11 @@ G4VPhysicalVolume* DetectorConstruction::SegmentedClover2()
 
   G4LogicalVolume *casingLV = new G4LogicalVolume(casingS, fAlu, "casingLV");
 
+  G4RotationMatrix rotDetector;
+  rotDetector.rotateX(90*deg);
+
   /*G4VPhysicalVolume* casingPV =*/
-    new G4PVPlacement(0,                     //no rotation
-                      G4ThreeVector(0,0,0),       //at (0,0,0)
+    new G4PVPlacement(G4Transform3D(rotDetector,G4ThreeVector(0,0,0)),
                       casingLV,            //its logical volume
                       "casingPV",               //its name
                       WorldLV,                     //its mother  volume
