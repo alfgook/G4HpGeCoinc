@@ -10,6 +10,7 @@
 
 class G4Event;
 class G4ParticleGun;
+class G4GeneralParticleSource;
 class G4GenericMessenger;
 class G4Radioactivation;
 class G4DecayProducts;
@@ -32,6 +33,7 @@ class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
   private:
    // G4GenericMessenger*  fMessenger;
     G4ParticleGun*  fParticleGun;  
+    G4GeneralParticleSource*  fGPS;  
     G4Radioactivation* fRadDecay;
     G4GenericMessenger* fMessenger;
     G4ParticleDefinition *fIon;
@@ -45,6 +47,7 @@ class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
     G4double fEx;
     G4int fVerbose;
     G4int fFollowDecayChain;
+    G4bool fUseGPS;
 
     G4DecayProducts* DoDecay(const G4ParticleDefinition& theParticleDef);
 };

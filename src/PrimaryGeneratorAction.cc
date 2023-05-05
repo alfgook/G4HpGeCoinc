@@ -6,6 +6,7 @@
 #include "PrimaryGeneratorAction.hh"
 
 #include "G4ParticleGun.hh"
+#include "G4GeneralParticleSource.hh"
 #include "G4ParticleTable.hh"
 #include "G4ParticleDefinition.hh"
 #include "G4GenericMessenger.hh"
@@ -27,12 +28,15 @@
 // Define
 PrimaryGeneratorAction::PrimaryGeneratorAction()     
 : G4VUserPrimaryGeneratorAction(),
-fParticleGun(0)
+fParticleGun(0),
+fGPS(0)
 { 
 
   fVerbose = 0;
 
   fParticleGun  = new G4ParticleGun(1);
+  fGPS  = new G4GeneralParticleSource();
+  fUseGPS = false;
   
   fRadDecay = new G4Radioactivation();
 
@@ -42,6 +46,7 @@ fParticleGun(0)
   fMessenger->DeclarePropertyWithUnit("ionEx", "keV", fEx, "excitation energy (keV) of primary radioactive ion");
   fMessenger->DeclareProperty("verbose", fVerbose, "verbose level");
   fMessenger->DeclareProperty("followdecaychain", fFollowDecayChain, "wether (1) or not (0) the daugther of the primary ion should be decayed");
+  fMessenger->DeclareProperty("useGPS", fUseGPS, "set to true to use the general particle source, or false (default) to turn it off");
 
   // default ion is La-140
   fZ = 57;
@@ -62,11 +67,18 @@ fParticleGun(0)
 
 
 PrimaryGeneratorAction::~PrimaryGeneratorAction()
-{}
+{
+  delete fParticleGun;
+  delete fGPS;
+}
 
 
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
 {
+  if(fUseGPS) {
+    fGPS->GeneratePrimaryVertex(event);
+    return;
+  }
   
   fIon = G4IonTable::GetIonTable()->GetIon(fZ,fA,fEx);
   fDecayTable = fRadDecay->GetDecayTable1(fIon);

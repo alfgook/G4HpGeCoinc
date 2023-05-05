@@ -858,7 +858,7 @@ G4VPhysicalVolume* DetectorConstruction::SegmentedClover2()
   G4double bottomThickness = cloverLength - cavityDepth;
   G4double curCloverLength = cloverLength/nVerticalSegments;
   if(bottomThickness>=curCloverLength) bottomThickness = curCloverLength;
-  G4double minWallThickness = 0.5*mm;
+  G4double minWallThickness = 0.1*mm;
   G4double innerRad = cavityRadius-minWallThickness;
   G4double outerRad = cloverRadius*(1.+tan(30*deg))+minWallThickness;
   G4double zPlane1[] = {-(cloverLength*0.5+minWallThickness),
@@ -882,7 +882,7 @@ G4VPhysicalVolume* DetectorConstruction::SegmentedClover2()
   G4LogicalVolume *casingLV = new G4LogicalVolume(casingS, fAlu, "casingLV");
 
   G4RotationMatrix rotDetector;
-  rotDetector.rotateX(90*deg);
+  rotDetector.rotateX(-90*deg);
 
   /*G4VPhysicalVolume* casingPV =*/
     new G4PVPlacement(G4Transform3D(rotDetector,G4ThreeVector(0,0,0)),
@@ -964,9 +964,10 @@ G4VPhysicalVolume* DetectorConstruction::SegmentedClover2()
                       checkOverlaps);        //overlaps checking
   }
 
+  G4double spacing_tolerance = 1.e-12*mm;
   // now the other ones
   for(G4int segment=1;segment<nVerticalSegments;segment++) {
-    G4double zpos = segment*curCloverLength + zpos0;
+    G4double zpos = segment*(curCloverLength+spacing_tolerance) + zpos0;
     for(G4int i=0;i<6;i++) {
       G4ThreeVector curpos(0,0,zpos);
       G4RotationMatrix* curRot = new G4RotationMatrix;

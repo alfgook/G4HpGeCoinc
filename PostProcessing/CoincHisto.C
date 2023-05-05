@@ -88,7 +88,9 @@ void CoincHisto(const char *filenameIn, const char *filenameOut, Double_t coincT
 			//if((*detectorNbr)[hit1]==7) continue; // hit is in the outer segment only
 			Esum += (*EnergyDeps)[hit1];
 			hE1->Fill((*EnergyDeps)[hit1]*1.E-03);
-			if( (((Int_t) nHits)-1)>=0 && (((Int_t) nHits)-1)<5 ) hE1_mult[nHits-1]->Fill((*EnergyDeps)[hit1]*1.E-03);
+			if( (((Int_t) nHits)-1)>=0 && (((Int_t) nHits)-1)<5 ) {
+				for(int nn=0;nn<nHits-1;nn++) hE1_mult[nn]->Fill((*EnergyDeps)[hit1]*1.E-03);
+			}
 		}
 		hSum->Fill(Esum*1.E-03);
 
