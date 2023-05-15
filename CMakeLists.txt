@@ -71,17 +71,19 @@ set_target_properties(G4HPGeCoinc PROPERTIES CXX_STANDARD 17)
 # build ED. This is so that we can run the executable directly because it
 # relies on these scripts being in the current working directory.
 #
-set(EXAMPLEED_SCRIPTS
-  init.mac
-  init_vis.mac
-  icons.mac
-  run.png
-  vis.mac
-  testRun.mac
-  default.cry.setup
+set(EXAMPLE_SCRIPTS
+  macros/init.mac
+  macros/init_vis.mac
+  macros/icons.mac
+  macros/run.png
+  macros/vis.mac
+  macros/testRun.mac
+  macros/default.cry.setup
+  macros/detectorSetup.mac
+  macros/Cs134.mac
   )
 
-foreach(_script ${EXAMPLEED_SCRIPTS})
+foreach(_script ${EXAMPLE_SCRIPTS})
   configure_file(
     ${PROJECT_SOURCE_DIR}/${_script}
     ${PROJECT_BINARY_DIR}/${_script}

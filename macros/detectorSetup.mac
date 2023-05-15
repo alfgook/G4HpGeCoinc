@@ -1,0 +1,57 @@
+
+# set the type of detector
+# 1 : simple dual detector system
+# 2 : segmented detector from the lab
+# 3 : planar segmented detector
+# 4 : clover segmented detector
+
+# /DetectorConstruction/detectorType 3
+# #
+# # setup of detector geometry parameters for the planar detector
+# /DetectorConstruction/nSegmentsX 3
+# /DetectorConstruction/nSegmentsY 3
+# /DetectorConstruction/SizeX 80 mm
+# /DetectorConstruction/SizeY 80 mm
+# /DetectorConstruction/SizeZ 25 mm
+# /DetectorConstruction/DetectorDistance 50 mm
+# /DetectorConstruction/Rebuild
+
+# /DetectorConstruction/detectorType 4
+# # setup of detector geometry parameters for the planar detector
+# /DetectorConstruction/cloverRadius 40 mm
+# /DetectorConstruction/cloverLength 90 mm
+# /DetectorConstruction/cavityRadius 7.5 mm
+# /DetectorConstruction/cavityDepth 80 mm 
+# /DetectorConstruction/nVerticalSegments 4
+# /DetectorConstruction/Rebuild
+
+# /DetectorConstruction/detectorType 5
+# # setup of detector geometry parameters for the well detector
+# # this is approximately the one suggested from Mirion
+# /DetectorConstruction/cloverRadius 94 mm
+# /DetectorConstruction/cloverLength 160 mm
+# /DetectorConstruction/cavityRadius 25 mm
+# /DetectorConstruction/cavityDepth 130 mm 
+# /DetectorConstruction/nVerticalSegments 4
+# /DetectorConstruction/Rebuild
+
+/DetectorConstruction/detectorType 5
+# setup of detector geometry parameters for the well detector
+/DetectorConstruction/cloverRadius 36 mm
+/DetectorConstruction/cloverLength 160 mm
+/DetectorConstruction/cavityRadius 25 mm
+/DetectorConstruction/cavityDepth 130 mm 
+/DetectorConstruction/nVerticalSegments 4
+/DetectorConstruction/Rebuild
+
+# /DetectorConstruction/detectorType 4
+# # setup of detector geometry parameters for the well detector
+# /DetectorConstruction/cloverRadius 80 mm
+# /DetectorConstruction/cloverLength 160 mm
+# /DetectorConstruction/cavityRadius 7.5 mm
+# /DetectorConstruction/cavityDepth 120 mm 
+# /DetectorConstruction/nVerticalSegments 2
+# /DetectorConstruction/Rebuild
+
+# /DetectorConstruction/detectorType 1
+# /DetectorConstruction/Rebuild

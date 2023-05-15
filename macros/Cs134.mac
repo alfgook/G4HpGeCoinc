@@ -1,0 +1,21 @@
+/DetectorConstruction/detectorType 5
+# setup of detector geometry parameters for the well detector
+/DetectorConstruction/cloverRadius 36 mm
+/DetectorConstruction/cloverLength 160 mm
+/DetectorConstruction/cavityRadius 25 mm
+/DetectorConstruction/cavityDepth 130 mm 
+/DetectorConstruction/nVerticalSegments 4
+/DetectorConstruction/Rebuild
+/run/initialize
+
+# Cs-134 is the default radioactive ion source
+/PrimaryGeneratorAction/ionZ 55
+/PrimaryGeneratorAction/ionA 134
+#/process/had/rdm/thresholdForVeryLongDecayTime 72 h # ignore decays at rest after 72 h
+
+/process/had/deex/correlatedGamma true # turn on the angular correlation
+/process/had/deex/maxTwoJ 10 # Set maximum value of J_i for which to consider angular correlations
+
+/analysis/setFileName Cs134.root # choose root analysis
+/run/printProgress 1000000
+/run/beamOn 10000000 # run a number of initial decays
