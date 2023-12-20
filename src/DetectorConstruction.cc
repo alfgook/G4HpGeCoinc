@@ -423,6 +423,7 @@ G4VPhysicalVolume* DetectorConstruction::DualDetector()
   // Force the detector to be drawn with wireframe
   G4VisAttributes *WorldVisAtt = new G4VisAttributes();
   WorldVisAtt->SetForceWireframe(true);
+  WorldVisAtt->SetVisibility(false);
   WorldLV->SetVisAttributes(WorldVisAtt);
 
   // ========== Cylinder representing a detector crystal =======
@@ -472,7 +473,7 @@ G4VPhysicalVolume* DetectorConstruction::DualDetector()
                       checkOverlaps);        //overlaps checking
   
 
-  G4VisAttributes *GeVisAtt = new G4VisAttributes(G4Color::Red());
+  G4VisAttributes *GeVisAtt = new G4VisAttributes(G4Color::Magenta());
   DetectorLV->SetVisAttributes(GeVisAtt);
   //====================================================
 
@@ -523,6 +524,7 @@ G4VPhysicalVolume* DetectorConstruction::PlanarSegmented()
   // Force the detector to be drawn with wireframe
   G4VisAttributes *WorldVisAtt = new G4VisAttributes();
   WorldVisAtt->SetForceWireframe(true);
+  WorldVisAtt->SetVisibility(false);
   WorldLV->SetVisAttributes(WorldVisAtt);
 
   // ========== Detector crystal =======
@@ -653,6 +655,18 @@ G4VPhysicalVolume* DetectorConstruction::PlanarSegmented()
 */
   //====================================================
 
+
+  G4VisAttributes *windowVisAtt = new G4VisAttributes();
+  windowVisAtt->SetColor(0.,0.,0.,1.);
+  windowVisAtt->SetForceWireframe(true);
+  casingLV1->SetVisAttributes(windowVisAtt);
+  casingLV2->SetVisAttributes(windowVisAtt);
+
+  G4VisAttributes *HPGeVisAtt = new G4VisAttributes();
+  HPGeVisAtt->SetColor(G4Color::Magenta());
+  SegmentLV->SetVisAttributes(HPGeVisAtt);
+
+
   return WorldPV; //must return G4VPhysicalVolume pointer to the world
 }
 
@@ -704,6 +718,8 @@ G4VPhysicalVolume* DetectorConstruction::SegmentedClover()
   // Force the detector to be drawn with wireframe
   G4VisAttributes *WorldVisAtt = new G4VisAttributes();
   WorldVisAtt->SetForceWireframe(true);
+
+  WorldVisAtt->SetVisibility(false);
   WorldLV->SetVisAttributes(WorldVisAtt);
 
   // ========== Detector crystal =======
@@ -852,6 +868,7 @@ G4VPhysicalVolume* DetectorConstruction::SegmentedClover2()
   // Force the detector to be drawn with wireframe
   G4VisAttributes *WorldVisAtt = new G4VisAttributes();
   WorldVisAtt->SetForceWireframe(true);
+  WorldVisAtt->SetVisibility(false);
   WorldLV->SetVisAttributes(WorldVisAtt);
 
   //============== Aluminum casing around the detector ================
@@ -983,6 +1000,17 @@ G4VPhysicalVolume* DetectorConstruction::SegmentedClover2()
                         checkOverlaps);        //overlaps checking
     }
   }
+
+  G4VisAttributes *HPGeVisAtt = new G4VisAttributes();
+  HPGeVisAtt->SetColor(G4Color::Magenta());
+  cloverLeafBottomLV->SetVisAttributes(HPGeVisAtt);
+  cloverLeafOtherLV->SetVisAttributes(HPGeVisAtt);
+
+  G4VisAttributes *windowVisAtt = new G4VisAttributes();
+  windowVisAtt->SetColor(0.,0.,0.,1.);
+  windowVisAtt->SetForceWireframe(true);
+  casingLV->SetVisAttributes(windowVisAtt);
+
 
   return WorldPV; //must return G4VPhysicalVolume pointer to the world
 }
