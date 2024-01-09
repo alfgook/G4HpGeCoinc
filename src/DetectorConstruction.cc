@@ -94,6 +94,51 @@ DetectorConstruction::DetectorConstruction()
   //HPGeDetector = new HPGeSD("HPGeSD","HPGeHC");
   fGe = new G4Material("HPGe",32.,72.640*g/mole,5.323*g/cm3,kStateSolid);
 
+  // fiberglass, type E : https://www.osti.gov/servlets/purl/1782721
+  // G4Element* elB = new G4Element("Boron", "B", 5., 10.811);
+  // G4Element* eO = new G4Element("Oxygen", "O", 8., 15.999);
+  // G4Element* eF = new G4Element("Flourine", "F", 9., 18.998);
+  // G4Element* eNa = new G4Element("Sodium", "Na", 11., 22.990);
+  // G4Element* eMg = new G4Element("Magnesium", "Mg", 12., 24.305);
+  // G4Element* eAl = new G4Element("Aluminium", "Al", 13., 26.982);
+  // G4Element* eSi = new G4Element("Silicon", "Si", 14., 28.085);
+  // G4Element* eK = new G4Element("Potasium", "K", 19., 39.098);
+  // G4Element* eCa = new G4Element("Calcium", "Ca", 20., 40.078);
+  // G4Element* eTi = new G4Element("Titanium", "Ti", 22., 47.867);
+  // G4Element* eFe = new G4Element("Iron", "Fe", 26., 55.845);
+
+  //G4double density = 2.57*g/cm3; //from fiberglass, type E
+  // G4double density = 0.92*g/cm3; // from https://www.sciencedirect.com/science/article/pii/S0969804316304687?via%3Dihub
+  // fFiberGlass = new G4Material("Fiberglass", density, 11);
+  // fFiberGlass->AddElement(elB, 0.022803);
+  // fFiberGlass->AddElement(eO , 0.471950);
+  // fFiberGlass->AddElement(eF , 0.004895);
+  // fFiberGlass->AddElement(eNa, 0.007262);
+  // fFiberGlass->AddElement(eMg, 0.014759);
+  // fFiberGlass->AddElement(eAl, 0.072536);
+  // fFiberGlass->AddElement(eSi, 0.247102);
+  // fFiberGlass->AddElement(eK , 0.008127);
+  // fFiberGlass->AddElement(eCa, 0.143428);
+  // fFiberGlass->AddElement(eTi, 0.004400);
+  // fFiberGlass->AddElement(eFe, 0.002739);
+
+  G4NistManager* nist = G4NistManager::Instance();
+
+  G4double density = 0.92*g/cm3; // from https://www.sciencedirect.com/science/article/pii/S0969804316304687?via%3Dihub
+  fFiberGlass = new G4Material("Fiberglass", density, 11);
+
+  fFiberGlass->AddMaterial(nist->FindOrBuildMaterial("G4_B"), 0.022803);
+  fFiberGlass->AddMaterial(nist->FindOrBuildMaterial("G4_O"), 0.471950);
+  fFiberGlass->AddMaterial(nist->FindOrBuildMaterial("G4_F"), 0.004895);
+  fFiberGlass->AddMaterial(nist->FindOrBuildMaterial("G4_Na"), 0.007262);
+  fFiberGlass->AddMaterial(nist->FindOrBuildMaterial("G4_Mg"), 0.014759);
+  fFiberGlass->AddMaterial(nist->FindOrBuildMaterial("G4_Al"), 0.072536);
+  fFiberGlass->AddMaterial(nist->FindOrBuildMaterial("G4_Si"), 0.247102);
+  fFiberGlass->AddMaterial(nist->FindOrBuildMaterial("G4_K"), 0.008127);
+  fFiberGlass->AddMaterial(nist->FindOrBuildMaterial("G4_Ca"), 0.143428);
+  fFiberGlass->AddMaterial(nist->FindOrBuildMaterial("G4_Ti"), 0.004400);
+  fFiberGlass->AddMaterial(nist->FindOrBuildMaterial("G4_Fe"), 0.002739);
+
   fMessenger = new G4GenericMessenger(this,"/DetectorConstruction/", "control the detector construction");
   fMessenger->DeclareProperty("detectorType", DetectorType, "type of detector (1 = dual detector, 2 = segmented detector, 3 = planar segmented)");
   fMessenger->DeclareProperty("nSegmentsX", nSegmentsX, "number of segments in X direction");
@@ -124,11 +169,13 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 {  
 
   G4cout << "DetectorConstruction::Construct()" << G4endl;
+  if(DetectorType==1) return DualDetector();
   if(DetectorType==2) return SegmentedDetector();
   if(DetectorType==3) return PlanarSegmented();
   if(DetectorType==4) return SegmentedClover();
   if(DetectorType==5) return SegmentedClover2();
-  return DualDetector();
+  if(DetectorType==6) return KursLabb();
+  return KursLabb();
   
 }
 
@@ -163,6 +210,11 @@ void DetectorConstruction::ConstructSDandField()
     //G4LogicalVolumeStore::GetInstance()->GetVolume("cloverLeafOtherLV")->SetSensitiveDetector(HPGeDetector);
     SetSensitiveDetector("cloverLeafBottomLV",HPGeDetector);
     SetSensitiveDetector("cloverLeafOtherLV",HPGeDetector);
+  } else if(DetectorType==6) {
+    SetSensitiveDetector("LV_crystal_72815_2",HPGeDetector);
+    SetSensitiveDetector("LV_crystal_72815",HPGeDetector);
+    SetSensitiveDetector("LV_crystal_7280",HPGeDetector);
+    SetSensitiveDetector("LV_crystal_7280_2",HPGeDetector);
   }
 
 }
@@ -1013,4 +1065,259 @@ G4VPhysicalVolume* DetectorConstruction::SegmentedClover2()
 
 
   return WorldPV; //must return G4VPhysicalVolume pointer to the world
+}
+
+
+
+
+G4VPhysicalVolume* DetectorConstruction::KursLabb()
+{
+  DetectorType = 6;
+  //============= MATERIAL DEFINITION =================
+  G4NistManager* nist = G4NistManager::Instance();  // Get nist material manager
+  G4Material* galactic = nist->FindOrBuildMaterial("G4_Galactic"); //Build vacuum material using the nist manager
+  G4Material* BGO = nist->FindOrBuildMaterial("G4_BGO"); //
+  G4Material* air = nist->FindOrBuildMaterial("G4_AIR"); //
+  G4Material* fAlu = nist->FindOrBuildMaterial("G4_Al"); //
+  G4Material* fPolystyrene = nist->FindOrBuildMaterial("G4_POLYSTYRENE"); //
+
+  G4cout << "****************" << G4endl;
+  G4cout << "nVerticalSegments = " << nVerticalSegments << G4endl;
+  G4cout << "****************" << G4endl;
+
+  //============= GEOMETRY DESCRIPTION =================
+
+  // Option to switch on/off checking of volumes overlaps
+  G4bool checkOverlaps = true;
+  
+  
+  //========== World ==================================
+  G4double world_sizeXY = 50.*cm;
+  G4double world_sizeZ  = 50.*cm;
+
+  G4Box* solidWorld =
+    new G4Box("WorldSolid",                       //its name
+       0.5*world_sizeXY, 0.5*world_sizeXY, 0.5*world_sizeZ);     //its size
+
+
+  WorldLV =
+    new G4LogicalVolume(solidWorld,          //its solid
+                        air,           //its material
+                        "WorldLV");            //its name
+
+  G4VPhysicalVolume* WorldPV =
+    new G4PVPlacement(0,                     //no rotation
+                      G4ThreeVector(0,0,0),       //at (0,0,0)
+                      WorldLV,            //its logical volume
+                      "WorldPV",               //its name
+                      0,                     //its mother  volume
+                      false,                 //no boolean operation
+                      0,                     //copy number
+                      checkOverlaps);        //overlaps checking
+
+  // Force the detector to be drawn with wireframe
+  G4VisAttributes *WorldVisAtt = new G4VisAttributes();
+  WorldVisAtt->SetForceWireframe(true);
+  WorldVisAtt->SetVisibility(false);
+  WorldLV->SetVisAttributes(WorldVisAtt);
+
+  G4int detectorNbr = 0;
+// ----------------------------- 72815 --------------------
+
+  G4double endcap_radius = 0.5*79.*mm;
+  G4double endcap_length = 215.*mm;
+  G4double endcap_thickness = 1.*mm;
+
+  G4double crystal_radius = 0.5*62.*mm;
+  G4double crystal_length = 67.0*mm;
+  G4double distance_to_endcap = 5.*mm;
+
+  G4double contact_radius = 7.32*mm;
+  G4double contact_length = 43.32*mm;
+
+  G4double distance_to_sample = 10.*mm;
+
+  G4LogicalVolume * LV_72815 = HPGeDetector(endcap_radius, endcap_length, endcap_thickness, crystal_radius, crystal_length,
+                                            distance_to_endcap, contact_radius, contact_length, detectorNbr++,"72815");
+  new G4PVPlacement(0,                     //no rotation
+                    G4ThreeVector(0,0,-0.5*endcap_length - distance_to_sample),       //at (0,0,0)
+                    LV_72815,            //its logical volume
+                    "PV_72815",               //its name
+                    WorldLV,                     //its mother  volume
+                    false,                 //no boolean operation
+                    0,                     //copy number
+                    checkOverlaps);        //overlaps checking
+
+  distance_to_sample = endcap_radius + 2.*mm;
+  G4RotationMatrix* rot90 = new G4RotationMatrix;
+  rot90->rotateX(90*deg);
+
+  G4LogicalVolume * LV_72815_2 = HPGeDetector(endcap_radius, endcap_length, endcap_thickness, crystal_radius, crystal_length,
+                                              distance_to_endcap, contact_radius, contact_length, detectorNbr++,"72815_2");
+  new G4PVPlacement(rot90,                     //no rotation
+                    G4ThreeVector(0,-0.5*endcap_length - distance_to_sample,0),       //at (0,0,0)
+                    LV_72815_2,            //its logical volume
+                    "PV_72815_90",               //its name
+                    WorldLV,                     //its mother  volume
+                    false,                 //no boolean operation
+                    0,                     //copy number
+                    checkOverlaps);        //overlaps checking
+// ----------------------------- 72850 --------------------
+
+  endcap_radius = 0.5*79.*mm;
+  endcap_length = 215.*mm;
+  endcap_thickness = 1.*mm;
+
+  crystal_radius = 0.5*64.*mm;
+  crystal_length = 65.0*mm;
+  distance_to_endcap = 5.*mm;
+
+  contact_radius = 7.32*mm;
+  contact_length = 43.32*mm;
+
+  distance_to_sample = 10.*mm;
+
+  G4LogicalVolume * LV_7280 = HPGeDetector( endcap_radius, endcap_length, endcap_thickness, crystal_radius, crystal_length,
+                                            distance_to_endcap, contact_radius, contact_length, detectorNbr++, "7280");
+
+  G4RotationMatrix* rot180 = new G4RotationMatrix;
+  rot180->rotateX(180*deg);
+  new G4PVPlacement(rot180,                     //no rotation
+                    G4ThreeVector(0,0,+0.5*endcap_length + distance_to_sample),       //at (0,0,0)
+                    LV_7280,            //its logical volume
+                    "PV_7280",               //its name
+                    WorldLV,                     //its mother  volume
+                    false,                 //no boolean operation
+                    0,                     //copy number
+                    checkOverlaps);        //overlaps checking
+
+
+  distance_to_sample = endcap_radius + 2.*mm;
+
+  G4LogicalVolume * LV_7280_2 = HPGeDetector( endcap_radius, endcap_length, endcap_thickness, crystal_radius, crystal_length,
+                                              distance_to_endcap, contact_radius, contact_length, detectorNbr++, "7280_2");
+
+  G4RotationMatrix* rot90b = new G4RotationMatrix;
+  rot90b->rotateX(-90*deg);
+  new G4PVPlacement(rot90b,                     //no rotation
+                    G4ThreeVector(0,+0.5*endcap_length + distance_to_sample,0),       //at (0,0,0)
+                    LV_7280_2,            //its logical volume
+                    "PV_7280_90",               //its name
+                    WorldLV,                     //its mother  volume
+                    false,                 //no boolean operation
+                    0,                     //copy number
+                    checkOverlaps);        //overlaps checking
+
+  // ================================================
+
+  G4double sample_thickness = 14.1*mm;
+  G4double sample_radius = 0.5*61.3*mm;
+
+  G4double sample_container_thickness = 1.*mm;
+  G4double sample_container_radius = sample_radius + sample_container_thickness;
+  G4double sample_container_height = sample_thickness + 2*sample_container_thickness;
+
+  G4Tubs* solid_sample = new G4Tubs("solid_sample",0.,sample_radius,0.5*sample_thickness,0.,360.*deg);
+  G4LogicalVolume* LV_sample = new G4LogicalVolume(solid_sample, fFiberGlass, "sampleLV");
+
+  G4Tubs* solid_container = new G4Tubs("solid_container",0.,sample_container_radius,0.5*sample_container_height,0.,360.*deg);
+  G4LogicalVolume* LV_container = new G4LogicalVolume(solid_container, fPolystyrene, "containerLV");
+
+  new G4PVPlacement(0,                     //no rotation
+                    G4ThreeVector(0,0,0),       //at (0,0,0)
+                    LV_sample,            //its logical volume
+                    "samplePV",               //its name
+                    LV_container,                     //its mother  volume
+                    false,                 //no boolean operation
+                    0,                     //copy number
+                    checkOverlaps);        //overlaps checking
+
+  new G4PVPlacement(0,                     //no rotation
+                    G4ThreeVector(0,0,0),       //at (0,0,0)
+                    LV_container,            //its logical volume
+                    "sample_containerPV",               //its name
+                    WorldLV,                     //its mother  volume
+                    false,                 //no boolean operation
+                    0,                     //copy number
+                    checkOverlaps);        //overlaps checking
+
+
+  return WorldPV; //must return G4VPhysicalVolume pointer to the world
+}
+
+// --------------------------------------------------------------------------------------------------------------------
+
+G4LogicalVolume* DetectorConstruction::HPGeDetector(G4double endcap_radius,
+                                                    G4double endcap_length,
+                                                    G4double endcap_thickness,
+                                                    G4double crystal_radius,
+                                                    G4double crystal_length,
+                                                    G4double distance_to_endcap,
+                                                    G4double contact_radius,
+                                                    G4double contact_length,
+                                                    G4int copyNo,
+                                                    G4String base_name)
+{
+
+  // fetch materials
+  G4NistManager* nist = G4NistManager::Instance();  // Get nist material manager
+  G4Material* fAlu = nist->FindOrBuildMaterial("G4_Al"); //Build vacuum material using the nist manager
+  G4Material* galactic = nist->FindOrBuildMaterial("G4_Galactic"); //Build vacuum material using the nist manager
+
+  // create the exterior of the endap
+  G4Tubs* solid_end_cap = new G4Tubs("solid_end_cap",0.,endcap_radius,0.5*endcap_length,0.,360.*deg);
+
+  G4LogicalVolume* LV_end_cap = new G4LogicalVolume(solid_end_cap, fAlu, "LV_end_cap");
+
+  // create the interior of the endcap
+  G4Tubs* solid_interior = new G4Tubs("solid_interior",0.,endcap_radius-endcap_thickness,0.5*endcap_length-endcap_thickness,0.,360.*deg);
+
+  G4LogicalVolume* LV_interior = new G4LogicalVolume(solid_interior, galactic, "LV_interior");
+
+  // place interior in exterior of endcap
+  new G4PVPlacement(0,                     //no rotation
+                    G4ThreeVector(0,0,0.5*endcap_thickness),       //at (0,0,0)
+                    LV_interior,            //its logical volume
+                    "interiorPV",               //its name
+                    LV_end_cap,                     //its mother  volume
+                    false,                 //no boolean operation
+                    copyNo,                     //copy number
+                    false);        //overlaps checking
+
+  // create the crystal
+
+  G4Tubs* solidCrystal = new G4Tubs("solidCrystal",0.,crystal_radius,0.5*crystal_length,0.,360.*deg);
+
+  G4LogicalVolume* LV_crystal = new G4LogicalVolume(solidCrystal, fGe, "LV_crystal_" + base_name);
+
+  G4VisAttributes *GeVisAtt = new G4VisAttributes(G4Color::Magenta());
+  LV_crystal->SetVisAttributes(GeVisAtt);
+
+  // place crystal in interior of endcap
+  new G4PVPlacement(0,                     //no rotation
+                    G4ThreeVector(0,0,(0.5*endcap_length-endcap_thickness) - 0.5*crystal_length - distance_to_endcap),       //at (0,0,0)
+                    LV_crystal,            //its logical volume
+                    "crystalPV",               //its name
+                    LV_interior,                     //its mother  volume
+                    false,                 //no boolean operation
+                    copyNo,                     //copy number
+                    false);        //overlaps checking
+
+  // create the central contact pin
+
+  G4Tubs* solidContact = new G4Tubs("solidContact",0.,contact_radius,0.5*contact_length,0.,360.*deg);
+
+  G4LogicalVolume* LV_contact = new G4LogicalVolume(solidContact, fAlu, "LV_contact");
+
+  // place contact in crystal
+  new G4PVPlacement(0,                     //no rotation
+                    G4ThreeVector(0,0,0.5*contact_length - 0.5*crystal_length),       //at (0,0,0)
+                    LV_contact,            //its logical volume
+                    "contactPV",               //its name
+                    LV_crystal,                     //its mother  volume
+                    false,                 //no boolean operation
+                    copyNo,                     //copy number
+                    false);        //overlaps checking
+
+  return LV_end_cap;
 }

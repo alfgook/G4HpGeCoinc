@@ -7,6 +7,7 @@
 
 #include "G4VUserPrimaryGeneratorAction.hh"
 #include "globals.hh"
+#include "G4ThreeVector.hh"
 
 class G4Event;
 class G4ParticleGun;
@@ -19,6 +20,7 @@ class G4DecayTable;
 class G4GenericMessenger;
 class G4SPSPosDistribution;
 class G4SPSRandomGenerator;
+class G4VPhysicalVolume;
 
 /// The first primary generator action class. It is of the type G4VUserPrimaryGeneratorAction
 
@@ -40,6 +42,8 @@ class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
     G4DecayTable* fDecayTable;
     G4SPSPosDistribution* fPosDist;
     G4SPSRandomGenerator* fPosGenerator;
+    G4VPhysicalVolume* fVolumeSource;
+    G4GenericMessenger* fPosMessenger;
 
     // parameters controlled trhough the generic messenger
     G4int fZ;
@@ -50,6 +54,9 @@ class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
     G4bool fUseGPS;
 
     G4DecayProducts* DoDecay(const G4ParticleDefinition& theParticleDef);
+    void SetVolumeSource(G4String);
+    void SetSourceGeometryType(G4String);
+    G4ThreeVector GenerateVertexPos();
 };
 
 #endif

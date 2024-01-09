@@ -31,6 +31,8 @@ class DetectorConstruction : public G4VUserDetectorConstruction
     G4VPhysicalVolume* PlanarSegmented();
     G4VPhysicalVolume* SegmentedClover();
     G4VPhysicalVolume* SegmentedClover2();
+    G4VPhysicalVolume* KursLabb();
+    G4LogicalVolume* HPGeDetector(G4double, G4double, G4double, G4double, G4double, G4double, G4double, G4double, G4int, G4String);
     G4GenericMessenger  *fMessenger;
     //void SetupDetectors();
 
@@ -54,6 +56,7 @@ class DetectorConstruction : public G4VUserDetectorConstruction
     G4LogicalVolume* WorldLV;
 
     G4Material *fGe;
+    G4Material *fFiberGlass;
 
 };
 

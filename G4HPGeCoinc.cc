@@ -101,6 +101,8 @@ int main(int argc,char** argv)
   // initialize modular physics list defined in ./src/PhysicsList.cc
   runManager->SetUserInitialization(new PhysicsList);
 
+  // I guess it is in this state (before runManager->Initialize()) where I need to turn on correlated gammas
+
 /*
   // alternatively reference pre-compiled PhysicsList via its name
   G4PhysListFactory factory;

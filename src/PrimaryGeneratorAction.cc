@@ -24,6 +24,7 @@
 #include "G4Gamma.hh"
 #include "G4SPSPosDistribution.hh"
 #include "G4SPSRandomGenerator.hh"
+#include "G4PhysicalVolumeStore.hh"
 
 // Define
 PrimaryGeneratorAction::PrimaryGeneratorAction()     
@@ -48,6 +49,17 @@ fGPS(0)
   fMessenger->DeclareProperty("followdecaychain", fFollowDecayChain, "wether (1) or not (0) the daugther of the primary ion should be decayed");
   fMessenger->DeclareProperty("useGPS", fUseGPS, "set to true to use the general particle source, or false (default) to turn it off");
 
+  fMessenger->DeclareMethod("setVolumeSource", &PrimaryGeneratorAction::SetVolumeSource)
+    .SetStates(G4State_PreInit,  G4State_Idle)
+    .SetGuidance("set the source to the given physical volume name. WARNING! This only works for volumes placed at (0,0,0) or if the volume is placed directly in the world (not nested).")
+    .SetParameterName("volume_name", false);
+
+  fMessenger->DeclareMethod("setSourceGeometryType", &PrimaryGeneratorAction::SetSourceGeometryType)
+    .SetStates(G4State_PreInit,  G4State_Idle)
+    .SetGuidance("todo");
+
+//    .SetParameterName("volume_name", false);
+
   // default ion is La-140
   fZ = 57;
   fA = 140;
@@ -62,7 +74,51 @@ fGPS(0)
   fPosDist->SetRadius(3.0*mm);
   fPosDist->SetHalfZ(1.5*mm);
 
+  fPosMessenger = new G4GenericMessenger(fPosDist,"/PrimaryGeneratorAction/pos/", "control the primary particle source position distribution");
+  fPosMessenger->DeclareMethod("shape", &G4SPSPosDistribution::SetPosDisShape)
+    .SetStates(G4State_PreInit,  G4State_Idle)
+    .SetGuidance("set the shape of the source to Sphere, Ellipsoid, Cylinder or Para (parallelpiped)")
+    .SetParameterName("shape", false);
+  fPosMessenger->DeclareMethod("center", &G4SPSPosDistribution::SetCentreCoords)
+    .SetStates(G4State_PreInit,  G4State_Idle)
+    .SetGuidance("Sets the centre co-ordinates (X,Y,Z) of the source in mm [default (0,0,0)].")
+    .SetParameterName("center", false);
+  fPosMessenger->DeclareMethod("halfX", &G4SPSPosDistribution::SetHalfX)
+    .SetStates(G4State_PreInit,  G4State_Idle)
+    .SetGuidance("Sets the half-length in x in mm [default 0].")
+    .SetParameterName("halfX", false);
+  fPosMessenger->DeclareMethod("halfY", &G4SPSPosDistribution::SetHalfY)
+    .SetStates(G4State_PreInit,  G4State_Idle)
+    .SetGuidance("Sets the half-length in y in mm [default 0].")
+    .SetParameterName("halfY", false);
+  fPosMessenger->DeclareMethod("halfZ", &G4SPSPosDistribution::SetHalfZ)
+    .SetStates(G4State_PreInit,  G4State_Idle)
+    .SetGuidance("Sets the half-length in z in mm [default 0]. Or the half-height of the cylinder.")
+    .SetParameterName("halfZ", false);
+  fPosMessenger->DeclareMethod("radius", &G4SPSPosDistribution::SetRadius)
+    .SetStates(G4State_PreInit,  G4State_Idle)
+    .SetGuidance("Sets the radius in mm of the source [default 0]")
+    .SetParameterName("radius", false);
+  fPosMessenger->DeclareMethod("paralpha", &G4SPSPosDistribution::SetParAlpha)
+    .SetStates(G4State_PreInit,  G4State_Idle)
+    .SetGuidance("Used with a Parallelepiped. The angle [default 0 rad] alpha formed by the y-axis and the plane joining the centre of the faces parallel to the zx plane at y and +y.")
+    .SetParameterName("alpha", false);
+  fPosMessenger->DeclareMethod("partheta", &G4SPSPosDistribution::SetParTheta)
+    .SetStates(G4State_PreInit,  G4State_Idle)
+    .SetGuidance("Used with a Parallelepiped. Polar angle [default 0 rad] theta of the line connecting the centre of the face at z to the centre of the face at +z. The units can only be deg or rad")
+    .SetParameterName("theta", false);
+  fPosMessenger->DeclareMethod("parphi", &G4SPSPosDistribution::SetParPhi)
+    .SetStates(G4State_PreInit,  G4State_Idle)
+    .SetGuidance("Used with a Parallelepiped. The azimuth angle [default 0 rad] phi of the line connecting the centre of the face at z with the centre of the face at +z. The units can only be deg or rad.")
+    .SetParameterName("phi", false);
+  fPosMessenger->DeclareMethod("confine", &G4SPSPosDistribution::ConfineSourceToVolume)
+    .SetStates(G4State_PreInit,  G4State_Idle)
+    .SetGuidance("Allows the user to confine the source to the physical volume name [default NULL]. Note that the defined volume source must completely cover the confining volume")
+    .SetParameterName("volume_name", false);
+
   fFollowDecayChain = 1;
+
+  fVolumeSource = nullptr;
 }
 
 
@@ -72,6 +128,67 @@ PrimaryGeneratorAction::~PrimaryGeneratorAction()
   delete fGPS;
 }
 
+void PrimaryGeneratorAction::SetVolumeSource(G4String volume_name)
+{
+  G4PhysicalVolumeStore *volStore = G4PhysicalVolumeStore::GetInstance();
+  G4VPhysicalVolume *the_volume = volStore->GetVolume(volume_name);
+
+  G4cout << "PrimaryGeneratorAction::SetVolumeSource(G4String volume_name)" << G4endl;
+
+  if(the_volume) {
+    G4cout << "setting the volume " << volume_name << " as the source" << G4endl;
+
+    fVolumeSource = the_volume;
+
+    /* 
+      A problem with this is that fVolumeSource->GetTranslation() only gets the local translation (inside it's mother volume).
+      It is difficult to get the global location/roation of the volume. One way would be to find the correct volume using the
+      G4Navigator at the start of the event-loop, when the geometry is closed. This way I would get a touchable which is a more
+      appropriate representation.
+    */
+
+  } else {
+
+    fVolumeSource = nullptr;
+    G4cout << volume_name << " not found, removing the volume source!" << G4endl;
+  
+  }
+}
+
+void PrimaryGeneratorAction::SetSourceGeometryType(G4String type)
+{
+
+}
+
+G4ThreeVector PrimaryGeneratorAction::GenerateVertexPos()
+{
+  G4ThreeVector decayPos;
+
+  if(fVolumeSource) {
+    G4VSolid *the_solid = fVolumeSource->GetMotherLogical()->GetSolid();
+
+    G4ThreeVector lo, hi;
+    the_solid->BoundingLimits(lo, hi);
+
+    G4int max_tries = 10000, itry = 0;
+    do {
+      decayPos.set( lo.x() + G4UniformRand()*(hi.x() - lo.x()),
+                    lo.y() + G4UniformRand()*(hi.y() - lo.y()),
+                    lo.z() + G4UniformRand()*(hi.z() - lo.z()));
+    } while(!the_solid->Inside(decayPos) && ++itry < max_tries);
+
+    if(itry == max_tries) {
+      G4cerr << "Was not able to generate vertex position in source" << G4endl;
+    }
+
+    decayPos += fVolumeSource->GetTranslation();
+
+  } else {
+    decayPos = fPosDist->GenerateOne();
+  }
+
+  return decayPos;
+}
 
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
 {
@@ -83,8 +200,12 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
   fIon = G4IonTable::GetIonTable()->GetIon(fZ,fA,fEx);
   fDecayTable = fRadDecay->GetDecayTable1(fIon);
 
+  /*
   G4ThreeVector decayPos = fPosDist->GenerateOne();
   decayPos += G4ThreeVector(0.,0.,+5.*mm);
+  */
+
+   G4ThreeVector decayPos = GenerateVertexPos();
 
   if (fDecayTable == 0 || fDecayTable->entries() == 0) {
     // No data in the decay table.
